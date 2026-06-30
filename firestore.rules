@@ -1,0 +1,100 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Default: deny everything ──────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── User Profile Document ─────────────────────────────────────────────────
+    //
+    // - Owner: full read/write.
+    // - Bond Partner: read-only access to the root document (not subcollections).
+    // - Everyone else: no access.
+    //
+    // Google Sign-In tokens are always email_verified, so we enforce this as an
+    // additional layer to prevent token abuse from other providers.
+    // ──────────────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isAuthenticated()
+                  && (isOwner(userId) || isBondPartner(userId));
+
+      allow create: if isAuthenticated()
+                    && isOwner(userId)
+                    && isValidNewUser();
+
+      allow update: if isAuthenticated()
+                    && isOwner(userId)
+                    && !isChangingUID();
+
+      allow delete: if isAuthenticated()
+                    && isOwner(userId);
+
+      // ── Check-in Logs ──────────────────────────────────────────────────────
+      match /checkin_logs/{logId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+
+      // ── Relapse Logs ───────────────────────────────────────────────────────
+      match /relapse_logs/{logId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+
+      // ── Vault Letters ──────────────────────────────────────────────────────
+      match /vault_letters/{letterId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+
+      // ── Dopamine Journal ───────────────────────────────────────────────────
+      match /dopamine_journal/{entryId} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+
+      // ── Bond Invites ───────────────────────────────────────────────────────
+      // A bond invite can be read by the recipient so they can accept it.
+      // Only the sender (owner of this document) can create/delete invites.
+      match /bond_invites/{inviteId} {
+        allow read: if isAuthenticated()
+                    && (isOwner(userId) || request.auth.uid == resource.data.recipientUid);
+        allow create: if isAuthenticated() && isOwner(userId);
+        allow delete: if isAuthenticated() && isOwner(userId);
+      }
+    }
+
+    // ── Helper Functions ──────────────────────────────────────────────────────
+
+    /// The user is signed in with a valid Firebase token.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /// The requesting user is the document owner.
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    /// The requesting user is the bond partner of the target user.
+    /// Reads the bond_partner_uid from the target user's document.
+    function isBondPartner(targetUserId) {
+      return exists(/databases/$(database)/documents/users/$(targetUserId))
+          && get(/databases/$(database)/documents/users/$(targetUserId)).data.bond_partner_uid == request.auth.uid;
+    }
+
+    /// Validates the shape of a new user document on creation.
+    /// Prevents clients from setting unexpected fields on first write.
+    function isValidNewUser() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['uid', 'email', 'role', 'accountStatus', 'onboarding_complete', 'created_at'])
+          && data.role == 'user'
+          && data.accountStatus == 'active'
+          && data.onboarding_complete == false;
+    }
+
+    /// Prevents users from changing their own UID field.
+    function isChangingUID() {
+      return request.resource.data.uid != resource.data.uid;
+    }
+  }
+}

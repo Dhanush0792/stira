@@ -1,0 +1,936 @@
+STIRA — NOTIFICATION INTELLIGENCE LAYER
+COMPLETE REBUILD PROMPT
+Paste this entire text into Antigravity. Do not split it.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXT — READ THIS FIRST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The current notification system only fires a single check-in reminder when the
+app opens for the first time each day. Nothing else fires. No background
+notifications. No danger zone alerts. No behavioural intelligence. The
+AdaptiveScheduler exists but is broken — it schedules nothing while the app is
+closed. The entire notification system needs to be rebuilt from scratch.
+
+The new system must work 100% locally using flutter_local_notifications and
+workmanager. Zero Firebase Cloud Functions. Zero Blaze plan required. Every
+notification fires from the device itself using on-device data from the existing
+Hive boxes: stira_prefs and stira_logs.
+
+The system must be genuinely intelligent. It reads the user's real check-in
+history, calculates their actual vulnerable time windows from data, tracks urge
+velocity, monitors location for danger zones, and sends notifications that feel
+like the app understands the user — not generic reminders. Notifications must
+also be real-time reactive: when the user submits a check-in inside the app, the
+system immediately responds, cancels irrelevant pending notifications, and
+schedules the right follow-up.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 1 — CODEBASE READ BEFORE TOUCHING ANYTHING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Read every file in lib/ before making any changes. Specifically confirm:
+
+1. The exact location and current contents of NotificationService (or any file
+   named notification_service.dart or adaptive_scheduler.dart).
+2. The exact Hive box names used in the app — confirm whether they are
+   stira_logs and stira_prefs or something different.
+3. The exact key names used inside stira_logs for check-in records — confirm
+   the key for urge level, timestamp, triggers, and location fields.
+4. The exact key names inside stira_prefs for: current_streak, user_name,
+   peak_window (from onboarding), primary_triggers (from onboarding),
+   last_checkin_at, last_relapse_at, danger_zones list.
+5. Where in the codebase check-in data is written to Hive after a user submits
+   a check-in. Show the exact lines.
+6. Whether workmanager is already in pubspec.yaml. If not, note that it needs
+   to be added.
+7. The current main.dart initialization sequence.
+
+Reply with all of these findings before writing any new code. If any Hive key
+names differ from what is listed above, use the actual names found in the
+codebase throughout all of the new code below.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 2 — PACKAGES AND ANDROID PERMISSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add these to pubspec.yaml under dependencies if they are not already present.
+Do not remove any existing packages. Only add what is missing.
+
+  flutter_local_notifications: ^18.0.0
+  timezone: ^0.9.4
+  workmanager: ^0.5.2
+  vibration: ^2.0.0
+  permission_handler: ^11.3.0
+
+In android/app/src/main/AndroidManifest.xml, add these permissions inside the
+<manifest> tag, before the <application> tag. Only add what is missing:
+
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+  <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+  <uses-permission android:name="android.permission.VIBRATE"/>
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+Inside the <application> tag, add these receivers. Only add what is missing:
+
+  <receiver android:exported="false"
+      android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"/>
+
+  <receiver android:exported="false"
+      android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+    <intent-filter>
+      <action android:name="android.intent.action.BOOT_COMPLETED"/>
+      <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+      <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+    </intent-filter>
+  </receiver>
+
+Confirm that minSdkVersion in android/app/build.gradle is 21 or higher. If it
+is lower, update it to 21.
+
+Run flutter pub get after making these changes. Confirm it exits with no errors
+before proceeding.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 3 — REBUILD NOTIFICATIONSERVICE COMPLETELY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find the existing NotificationService file. Delete its entire contents and
+replace with the following implementation. Keep the same file path so no
+imports elsewhere break.
+
+The new NotificationService must do the following:
+
+INITIALIZATION:
+- Initialize timezone package using tz.initializeTimeZones() and
+  tz.setLocalLocation() using the device's local timezone.
+- Initialize FlutterLocalNotificationsPlugin with Android icon
+  "@mipmap/ic_launcher" and iOS settings with requestAlertPermission: false
+  (we request permission manually).
+- Create three Android notification channels on initialization:
+    Channel ID "stira_critical" — name "Stira Alerts" — importance MAX —
+    vibration ON — sound ON — this is for danger zones and crisis moments.
+    Channel ID "stira_high" — name "Stira Reminders" — importance HIGH —
+    vibration ON — sound ON — this is for check-in reminders and milestones.
+    Channel ID "stira_low" — name "Stira Updates" — importance DEFAULT —
+    vibration OFF — sound ON — this is for journal reminders and identity
+    messages.
+- Register a notification tap handler that reads the payload string and calls
+  a static method StiraNavigationService.routeFromPayload(payload) if that
+  service exists, or stores the payload in stira_prefs under key
+  "pending_notification_tap" if the app is in the background.
+
+PERMISSION REQUEST:
+- Add a static method requestPermission() that requests POST_NOTIFICATIONS
+  permission on Android 13+ using permission_handler, and requests alert,
+  badge, and sound permissions on iOS.
+
+SHOW IMMEDIATELY (for crisis and real-time events):
+- Add a static method showNow(int id, String title, String body, String
+  channelId, String payload) that calls flutterLocalNotificationsPlugin.show()
+  with BigTextStyleInformation so long bodies are fully visible. Always cancel
+  any existing notification with the same id before showing the new one.
+
+SCHEDULE FOR FUTURE TIME (for all timed notifications):
+- Add a static method scheduleAt(int id, String title, String body,
+  DateTime when, String channelId, String payload) that calls
+  flutterLocalNotificationsPlugin.zonedSchedule() with
+  androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle and
+  uiLocalNotificationDateInterpretation:
+  UILocalNotificationDateInterpretation.absoluteTime. Always cancel any
+  existing notification with the same id before scheduling. Convert DateTime
+  to tz.TZDateTime using tz.TZDateTime.from(when, tz.local).
+
+CANCEL:
+- Add static method cancel(int id) that cancels a single notification by id.
+- Add static method cancelAll() that cancels all pending notifications.
+
+SOS HEARTBEAT (haptic only, no visual notification):
+- Add static method fireSOSHeartbeat() that vibrates the device using the
+  vibration package with this exact pattern:
+  pattern: [0, 100, 100, 100, 100, 100, 200, 600, 200, 100, 100, 100, 100, 100]
+  This produces: 3 short pulses, pause, 1 long pulse, pause, 3 short pulses.
+  The pattern fires silently with no notification shown.
+
+NOTIFICATION IDs — define these as static const int values:
+  ID_CHECKIN_REMINDER = 101
+  ID_CHECKIN_FOLLOWUP = 102
+  ID_VULNERABILITY_WARNING = 103
+  ID_URGE_VELOCITY = 104
+  ID_DANGER_ZONE = 105
+  ID_SAFE_ZONE = 106
+  ID_STREAK_MILESTONE = 107
+  ID_PRE_MILESTONE = 108
+  ID_PERSONAL_BEST = 109
+  ID_RELAPSE_SUPPORT = 110
+  ID_DISENGAGEMENT_48H = 111
+  ID_DISENGAGEMENT_72H = 112
+  ID_DOPAMINE_JOURNAL = 113
+  ID_IDENTITY_PUSH = 114
+  ID_WEEKLY_REPORT = 115
+  ID_SAME_TIME_TOMORROW = 116
+  ID_MORNING_ANCHOR = 117
+  ID_STABILITY_UP = 118
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 4 — CREATE STIRA BEHAVIOUR READER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create a new file: lib/services/stira_behaviour_reader.dart
+
+This file contains a single class StiraBehaviourReader with a single static
+method called snapshot() that returns a StiraBehaviourSnapshot object. It reads
+only from Hive. No network calls. No Firestore reads.
+
+The StiraBehaviourSnapshot object must contain these fields:
+
+  String userName            — from stira_prefs
+  int currentStreak          — from stira_prefs
+  int totalCleanDays         — from stira_prefs
+  int hoursSinceLastCheckIn  — calculated from stira_prefs last_checkin_at
+  bool checkedInToday        — true if last_checkin_at is today's date
+  int sentToday              — from stira_prefs, reset to 0 at midnight
+  DateTime? lastSentAt       — from stira_prefs
+  bool restMode              — from stira_prefs, true after 5 ignored notifs
+  bool dopamineJournalToday  — check stira_logs for a journal entry today
+  int peakHour               — calculated from check-in history (see below)
+  int peakHourConfidence     — 0 to 100, how confident the peak hour is
+  double urgeVelocity        — calculated from last 3 check-ins (see below)
+  String topTrigger          — most frequent trigger across all check-ins
+  double stabilityTrend      — positive means improving, negative means worse
+  String coreNeed            — from stira_prefs, set during onboarding
+  bool sameTimeTomorrowDue   — true if a commitment exists from 23-25h ago
+  String commitmentText      — the commitment text if sameTimeTomorrowDue
+  DateTime? lastRelapseAt    — from stira_prefs last_relapse_at
+  List<Map> dangerZones      — list of danger zone maps from stira_prefs
+  int daysSinceInstall       — calculated from stira_prefs install_date
+  int personalBestStreak     — from stira_prefs
+
+HOW TO CALCULATE peakHour:
+Read all check-in records from stira_logs where urge level is 6 or higher.
+Count how many high-intensity check-ins occurred at each hour of the day (0-23).
+The peakHour is the hour with the highest count. If there are fewer than 5
+total high-intensity check-ins, fall back to the peak_window value from onboarding:
+Morning = hour 9, Afternoon = hour 14, Evening = hour 19, Night = hour 22.
+peakHourConfidence is: (count at peakHour / total high-intensity check-ins * 100)
+clamped between 0 and 100. If using onboarding fallback, confidence is 30.
+
+HOW TO CALCULATE urgeVelocity:
+Read the last 3 check-in records from stira_logs sorted by timestamp descending.
+urgeVelocity = urgeLevel[0] - urgeLevel[2] (newest minus oldest of the 3).
+A positive number means urges are rising. A value of 3 or higher is critical.
+If fewer than 3 check-ins exist, urgeVelocity is 0.
+
+HOW TO CALCULATE topTrigger:
+Read all check-in records from stira_logs. For each check-in, read the triggers
+list. Count occurrences of each trigger string. The topTrigger is the string
+that appears most often. If no check-ins exist, use the first value from the
+primary_triggers field in stira_prefs.
+
+HOW TO CALCULATE stabilityTrend:
+Compare average urge intensity of the last 7 days versus the 7 days before that.
+stabilityTrend = avgUrge(days8to14) - avgUrge(days1to7).
+A positive stabilityTrend means the user is improving (lower urges recently).
+A negative stabilityTrend means urges are getting worse.
+
+HOW TO CHECK sameTimeTomorrowDue:
+Read from stira_logs all entries with type "commitment". Find the most recent
+one. If its saved_at timestamp is between 23 and 25 hours ago, and it has no
+"outcome" field set, then sameTimeTomorrowDue is true and commitmentText is its
+"text" field.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 5 — CREATE STIRA THROTTLE MANAGER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create a new file: lib/services/stira_throttle_manager.dart
+
+This class enforces all limits on notification sending. Every notification in
+the entire system must call ThrottleManager.canSend() before firing. If
+canSend() returns false, the notification is silently dropped.
+
+RULES canSend() must enforce:
+
+QUIET HOURS RULE: If the current hour is 22 or later, or earlier than 8, return
+false. Crisis override: if isCrisis is true, quiet hours are ignored.
+
+DAILY LIMIT RULE: Read sentToday from stira_prefs. If sentToday is 2 or more
+and restMode is false, return false. If sentToday is 1 or more and restMode is
+true, return false. If crisisActive is true, the limit increases to 4.
+
+MINIMUM GAP RULE: Read lastSentAt from stira_prefs. If the difference between
+now and lastSentAt is less than 3 hours, return false. Crisis override: if
+isCrisis is true, minimum gap is ignored.
+
+MIDNIGHT RESET: At the start of canSend(), check if the stored last_reset_date
+in stira_prefs matches today's date (YYYY-MM-DD format). If it does not match,
+reset sentToday to 0 and update last_reset_date. This ensures the daily limit
+resets every midnight automatically.
+
+REST MODE CHECK: Read rest_mode_until from stira_prefs. If it exists and is in
+the future, restMode is true. If it has passed, clear it and set restMode false.
+
+METHODS TO IMPLEMENT:
+
+canSend({bool isCrisis = false}) → bool: applies all rules above, returns true
+if a notification can be sent right now.
+
+recordSent(): increments sentToday in stira_prefs by 1, updates lastSentAt to
+now.
+
+recordTap(): resets consecutive_untapped in stira_prefs to 0. If rest_mode was
+active, clears it.
+
+recordUntapped(): increments consecutive_untapped in stira_prefs by 1. If
+consecutive_untapped reaches 5, sets rest_mode_until to 7 days from now.
+
+setCrisisActive(bool active): writes crisis_active to stira_prefs.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 6 — CREATE ALL NOTIFICATION MESSAGES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create a new file: lib/services/stira_notification_messages.dart
+
+This file contains only message strings. No logic. Each method takes a
+StiraBehaviourSnapshot and returns a Map with keys "title", "body", and
+"payload".
+
+The payload is a route string that deep links to the right screen when the
+notification is tapped. Use these payload routes:
+  "/home" → opens Dashboard
+  "/checkin" → opens Check-in screen directly
+  "/tools" → opens Tools tab
+  "/insights" → opens Insights tab
+  "/journal" → opens Dopamine Journal
+  "/identity" → opens Identity Builder screen
+
+The messages must get more specific as the system has more data. Use the
+peakHourConfidence and daysSinceInstall fields from the snapshot to decide which
+variant to use. If daysSinceInstall is less than 7 OR peakHourConfidence is
+less than 40, use the generic variant. If daysSinceInstall is 7 to 30, use the
+pattern variant. If daysSinceInstall is 30 or more AND peakHourConfidence is
+70 or higher, use the specific variant.
+
+
+MESSAGE: checkInReminder(snapshot)
+Generic variant:
+  title: "How are you right now?"
+  body: "Take 30 seconds. Just drag the dial to your number — nothing else needed."
+  payload: "/checkin"
+
+Pattern variant:
+  title: "Your window is coming."
+  body: "This time of day tends to be harder for you. One check-in before it builds."
+  payload: "/checkin"
+
+Specific variant:
+  title: "Check in, [userName]."
+  body: "[topTrigger] hits you hardest around this time. Thirty seconds — just your number."
+  payload: "/checkin"
+
+
+MESSAGE: checkInFollowUp(snapshot)
+This fires 4 hours after the user submits a check-in, as a follow-up.
+  title: "Still with you."
+  body: "You checked in earlier. Things can shift fast. How are you now?"
+  payload: "/checkin"
+
+
+MESSAGE: vulnerabilityWarning(snapshot)
+This fires 30 to 45 minutes before the calculated peak hour.
+
+Generic variant:
+  title: "Your peak window is approaching."
+  body: "Based on your pattern, this next hour tends to be your hardest. Stay ahead of it."
+  payload: "/home"
+
+Pattern variant:
+  title: "Heads up — your window opens soon."
+  body: "[topTrigger] is your main trigger at this time. Check in now so the system can help."
+  payload: "/checkin"
+
+Specific variant:
+  title: "[Day of week] at this time."
+  body: "Your [topTrigger] pattern is strongest in the next hour. You know this window. Use a tool."
+  payload: "/tools"
+
+Where [Day of week] is the actual current day name: Monday, Tuesday, etc.
+
+
+MESSAGE: urgeVelocity(snapshot)
+This fires when urgeVelocity >= 3 (urges rising fast across 3 check-ins).
+  title: "Something is building."
+  body: "Your last few check-ins show things escalating. This is the moment to use a tool — before it peaks."
+  payload: "/tools"
+
+
+MESSAGE: dangerZone(String zoneName)
+  title: "You're near somewhere difficult."
+  body: "Your pattern shows [zoneName] is hard. You don't have to go in. Your tools are one tap away."
+  payload: "/tools"
+
+
+MESSAGE: safeZone(String zoneName)
+  title: "You're in a strong place."
+  body: "[zoneName] is where you do well. Stay as long as you can."
+  payload: "/home"
+
+
+MESSAGE: streakMilestone(int days, String userName)
+Use this exact copy for each milestone. Do not invent new copy.
+  Day 3:   title: "Three days." / body: "Most people stop before this. You didn't. Three days is real."
+  Day 7:   title: "One week." / body: "Seven days. Your brain is already changing. Open your Rewire Map."
+  Day 14:  title: "Two weeks." / body: "Fourteen days of choosing differently. Streak Insurance is now active."
+  Day 30:  title: "Thirty days." / body: "One month. Fewer than 5% of people reach this. You are one of them."
+  Day 60:  title: "Sixty days." / body: "Two months. The old patterns are fading. New ones are your default now."
+  Day 90:  title: "90 days." / body: "Three months. This is when new habits become structural. You did this."
+  Day 180: title: "180 days." / body: "Six months. Your Rewire Map is complete. The old patterns are nearly gone."
+  Day 365: title: "One year." / body: "365 days of choosing yourself. This is identity now, not willpower."
+  For any other day: title: "Day [days]." / body: "Keep going, [userName]. Every day matters."
+  payload for all: "/home"
+
+
+MESSAGE: preMilestone(int tomorrowMilestone)
+  title: "Tomorrow is Day [tomorrowMilestone]."
+  body: "One more day. You've already done the hard part."
+  payload: "/home"
+
+
+MESSAGE: personalBestApproach(int personalBest, int current)
+  title: "One day from your record."
+  body: "Your personal best is [personalBest] days. Tomorrow you tie it. The day after, you break it."
+  payload: "/home"
+
+
+MESSAGE: relapseSupport(snapshot)
+  title: "Day 1 again. That's okay."
+  body: "Your total clean days are [totalCleanDays]. A slip doesn't erase what you built. What do you need right now?"
+  payload: "/home"
+
+
+MESSAGE: disengagement48h(snapshot)
+  title: "We haven't heard from you, [userName]."
+  body: "That's okay. One tap — just your number today. Nothing else needed."
+  payload: "/checkin"
+
+
+MESSAGE: disengagement72h(snapshot)
+  title: "You went quiet. No judgment."
+  body: "However the last few days went — Stira doesn't reset your worth. Check in whenever you're ready."
+  payload: "/home"
+
+
+MESSAGE: dopamineJournal()
+  title: "What gave you real dopamine today?"
+  body: "One sentence. It doesn't have to be big. A meal. A conversation. A quiet hour."
+  payload: "/journal"
+
+
+MESSAGE: identityPush(int dayIndex)
+Rotate through these 10 completions using dayIndex % 10 as the index:
+  0: "...keeps my word to myself."
+  1: "...chooses long-term over short-term."
+  2: "...is stronger than my habits."
+  3: "...builds, not destroys."
+  4: "...is already changing."
+  5: "...does not need this."
+  6: "...has proven they can stop."
+  7: "...values their future self."
+  8: "...chooses differently today."
+  9: "...is becoming someone new."
+  title: "I am someone who..."
+  body: "...[completion from list]"
+  payload: "/identity"
+
+
+MESSAGE: sameTimeTomorrow(String userName, String commitmentText)
+Truncate commitmentText to 40 characters with "..." if longer.
+  title: "[userName], you said: \"[commitmentText]\""
+  body: "It's that time. You planned for this moment. How did it go?"
+  payload: "/checkin"
+
+
+MESSAGE: weeklyReport()
+  title: "Your week in review is ready."
+  body: "Stability trend, top trigger, and one focus for the week ahead."
+  payload: "/insights"
+
+
+MESSAGE: morningAnchor(snapshot)
+  title: "Good morning, [userName]."
+  body: "Day [currentStreak + 1] starts now. Your [topTrigger] window is this evening. Plan for it."
+  payload: "/home"
+
+
+MESSAGE: stabilityImproving(snapshot)
+  title: "Your stability is rising."
+  body: "Your urges have been lower this week than last week. That number is real. You're building something."
+  payload: "/insights"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 7 — CREATE THE INTELLIGENCE ENGINE (THE BRAIN)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create a new file: lib/services/stira_intelligence_engine.dart
+
+This file has two responsibilities:
+1. A background cycle that runs every 15 minutes using workmanager.
+2. Real-time reaction methods that are called directly from the UI the moment
+   the user does something.
+
+BACKGROUND ENTRY POINT:
+Create a top-level function called callbackDispatcher() marked with
+@pragma("vm:entry-point"). This function calls Workmanager().executeTask().
+Inside the task handler, check the task name. If it matches
+"stira_intelligence_cycle", open all required Hive boxes, initialize
+NotificationService, and call StiraIntelligenceEngine.runCycle(). If the task
+name matches "stira_location_check", call StiraLocationMonitor.checkLocation().
+Always return Future.value(true) at the end regardless of what happened.
+
+This callbackDispatcher function must be at the top level of the file, not
+inside any class.
+
+START BACKGROUND CYCLE:
+Add a static method startBackgroundCycle() that calls:
+Workmanager().initialize(callbackDispatcher, isInDebugMode: false)
+Then registers a periodic task with:
+  uniqueName: "stira_intelligence_task"
+  taskName: "stira_intelligence_cycle"
+  frequency: Duration(minutes: 15)
+  constraints: Constraints(networkType: NetworkType.not_required,
+    requiresBatteryNotLow: false, requiresDeviceIdle: false)
+  existingWorkPolicy: ExistingWorkPolicy.keep
+
+THE DECISION CYCLE — runCycle():
+This method runs every 15 minutes. It reads the behaviour snapshot, then works
+through the following decision steps in exact order. It fires at most one
+notification per cycle (the first one that passes all conditions) and then
+returns. One notification per 15-minute cycle maximum.
+
+Step 1 — MIDNIGHT RESET
+Call ThrottleManager.canSend() which handles the midnight sentToday reset
+automatically. No additional code needed here.
+
+Step 2 — CRISIS: URGE VELOCITY CHECK
+Read the snapshot. If snapshot.urgeVelocity >= 3.0 and snapshot.checkedInToday
+is true: this means the user has checked in multiple times today and their
+urges are rising fast. Fire immediately without throttle check.
+  Call NotificationService.showNow with:
+    id: ID_URGE_VELOCITY
+    title and body from Messages.urgeVelocity(snapshot)
+    channelId: "stira_critical"
+  Call ThrottleManager.recordSent().
+  Return. Do not check any other conditions this cycle.
+
+Step 3 — MILESTONE: STREAK MILESTONES
+Read snapshot.currentStreak. Check if it matches any of these: 3, 7, 14, 30,
+60, 90, 180, 365. If it matches, read last_milestone_fired from stira_prefs.
+If last_milestone_fired does not equal the current streak value, this milestone
+has not been announced yet. Fire it:
+  Call NotificationService.showNow with:
+    id: ID_STREAK_MILESTONE
+    title and body from Messages.streakMilestone(snapshot.currentStreak, snapshot.userName)
+    channelId: "stira_high"
+  Write current streak value to last_milestone_fired in stira_prefs.
+  Call ThrottleManager.recordSent().
+  Return.
+This fires regardless of quiet hours and daily limit because milestones must
+never be blocked.
+
+Step 4 — MILESTONE: PRE-MILESTONE TOMORROW
+If snapshot.currentStreak + 1 matches any of: 3, 7, 14, 30, 60, 90, 180, 365
+AND the current hour is between 19 and 21 (7 PM to 9 PM):
+  If ThrottleManager.canSend() returns true:
+    Call NotificationService.showNow with:
+      id: ID_PRE_MILESTONE
+      title and body from Messages.preMilestone(snapshot.currentStreak + 1)
+      channelId: "stira_high"
+    Call ThrottleManager.recordSent().
+    Return.
+
+Step 5 — SAME TIME TOMORROW COMMITMENT
+If snapshot.sameTimeTomorrowDue is true:
+  If ThrottleManager.canSend() returns true:
+    Call NotificationService.showNow with:
+      id: ID_SAME_TIME_TOMORROW
+      title and body from Messages.sameTimeTomorrow(snapshot.userName, snapshot.commitmentText)
+      channelId: "stira_high"
+    Call ThrottleManager.recordSent().
+    Return.
+
+Step 6 — PREDICTIVE: VULNERABILITY WARNING
+Calculate minutesUntilPeakHour = (snapshot.peakHour * 60) - (currentHour * 60 + currentMinute).
+If minutesUntilPeakHour is between 30 and 50 AND snapshot.peakHourConfidence >= 45:
+  If ThrottleManager.canSend() returns true:
+    Call NotificationService.showNow with:
+      id: ID_VULNERABILITY_WARNING
+      title and body from Messages.vulnerabilityWarning(snapshot)
+      channelId: "stira_high"
+    Call ThrottleManager.recordSent().
+    Return.
+
+Step 7 — CHECK-IN REMINDER
+If snapshot.checkedInToday is false AND snapshot.hoursSinceLastCheckIn < 48:
+  Calculate minutesToPeak = abs((snapshot.peakHour - currentHour) * 60).
+  If minutesToPeak <= 90 (within 1.5 hours of peak window):
+    If ThrottleManager.canSend() returns true:
+      Call NotificationService.showNow with:
+        id: ID_CHECKIN_REMINDER
+        title and body from Messages.checkInReminder(snapshot)
+        channelId: "stira_high"
+      Call ThrottleManager.recordSent().
+      Return.
+
+Step 8 — DISENGAGEMENT
+If snapshot.hoursSinceLastCheckIn >= 72:
+  If ThrottleManager.canSend() returns true:
+    Call NotificationService.showNow with:
+      id: ID_DISENGAGEMENT_72H
+      title and body from Messages.disengagement72h(snapshot)
+      channelId: "stira_low"
+    Call ThrottleManager.recordSent().
+    Return.
+If snapshot.hoursSinceLastCheckIn >= 48:
+  If ThrottleManager.canSend() returns true:
+    Call NotificationService.showNow with:
+      id: ID_DISENGAGEMENT_48H
+      title and body from Messages.disengagement48h(snapshot)
+      channelId: "stira_low"
+    Call ThrottleManager.recordSent().
+    Return.
+
+Step 9 — DOPAMINE JOURNAL
+If snapshot.dopamineJournalToday is false AND current hour is 21:
+  If ThrottleManager.canSend() returns true:
+    Call NotificationService.showNow with:
+      id: ID_DOPAMINE_JOURNAL
+      title and body from Messages.dopamineJournal()
+      channelId: "stira_low"
+    Call ThrottleManager.recordSent().
+    Return.
+
+Step 10 — IDENTITY PUSH
+If snapshot.sentToday == 0 AND current hour == snapshot.peakHour:
+  If ThrottleManager.canSend() returns true:
+    Call NotificationService.showNow with:
+      id: ID_IDENTITY_PUSH
+      title and body from Messages.identityPush(snapshot.daysSinceInstall)
+      channelId: "stira_low"
+    Call ThrottleManager.recordSent().
+    Return.
+
+Step 11 — WEEKLY REPORT
+If today is Sunday AND current hour is 8:
+  Read last_weekly_report_sent from stira_prefs. If it does not match today's
+  date string:
+    If ThrottleManager.canSend() returns true:
+      Call NotificationService.showNow with:
+        id: ID_WEEKLY_REPORT
+        title and body from Messages.weeklyReport()
+        channelId: "stira_low"
+      Write today's date to last_weekly_report_sent in stira_prefs.
+      Call ThrottleManager.recordSent().
+      Return.
+
+Step 12 — STABILITY IMPROVING
+If snapshot.stabilityTrend > 0.5 (user is measurably improving):
+  Read last_stability_notif from stira_prefs. If it was more than 7 days ago
+  or has never been sent:
+    If ThrottleManager.canSend() returns true:
+      Call NotificationService.showNow with:
+        id: ID_STABILITY_UP
+        title and body from Messages.stabilityImproving(snapshot)
+        channelId: "stira_low"
+      Write today's date to last_stability_notif in stira_prefs.
+      Call ThrottleManager.recordSent().
+      Return.
+
+If none of the above conditions triggered anything, the cycle ends silently.
+This is correct. Silence on stable days is intentional.
+
+
+REAL-TIME REACTION METHOD: reactToAction(UserAction action)
+This static method is called directly from the UI code the moment the user does
+something. It must be fast — it runs on the main thread. Call
+NotificationService.initialize() at the start in case it was not already called.
+
+When action == UserAction.checkInSubmitted:
+  1. Cancel these pending notifications immediately:
+     ID_CHECKIN_REMINDER, ID_DISENGAGEMENT_48H, ID_DISENGAGEMENT_72H
+  2. Read the most recently saved check-in from stira_logs to get the urge level.
+  3. If urge level >= 8:
+     - Call ThrottleManager.setCrisisActive(true)
+     - Call NotificationService.fireSOSHeartbeat()
+  4. If urge level < 8:
+     - Call ThrottleManager.setCrisisActive(false)
+  5. Read snapshot. Schedule a follow-up check-in notification for 4 hours from
+     now using NotificationService.scheduleAt with:
+       id: ID_CHECKIN_FOLLOWUP
+       title and body from Messages.checkInFollowUp(snapshot)
+       when: DateTime.now().add(Duration(hours: 4))
+       channelId: "stira_low"
+       payload: "/checkin"
+
+When action == UserAction.relapseLogged:
+  1. Write DateTime.now() to last_relapse_at in stira_prefs.
+  2. Read snapshot.
+  3. Call NotificationService.showNow immediately (no throttle check, crisis):
+       id: ID_RELAPSE_SUPPORT
+       title and body from Messages.relapseSupport(snapshot)
+       channelId: "stira_critical"
+       payload: "/home"
+  4. Call ThrottleManager.recordSent().
+  5. Call ThrottleManager.setCrisisActive(false).
+
+When action == UserAction.commitmentSaved:
+  Read the most recent commitment text from stira_logs.
+  Read snapshot.
+  Call NotificationService.scheduleAt with:
+    id: ID_SAME_TIME_TOMORROW
+    title and body from Messages.sameTimeTomorrow(snapshot.userName, commitmentText)
+    when: DateTime.now().add(Duration(hours: 24))
+    channelId: "stira_high"
+    payload: "/checkin"
+
+When action == UserAction.appOpened:
+  Cancel ID_DISENGAGEMENT_48H and ID_DISENGAGEMENT_72H.
+  These fire only when the user is away. When they open the app, cancel them.
+
+When action == UserAction.notificationTapped:
+  Call ThrottleManager.recordTap().
+
+ENUM UserAction:
+Define this enum at the bottom of the file:
+enum UserAction {
+  checkInSubmitted,
+  relapseLogged,
+  commitmentSaved,
+  appOpened,
+  notificationTapped,
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 8 — CREATE STIRA LOCATION MONITOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create a new file: lib/services/stira_location_monitor.dart
+
+This file monitors location in the background and fires when the user enters a
+danger zone or safe zone.
+
+Add a static method initialize() that registers a workmanager periodic task:
+  uniqueName: "stira_location_task"
+  taskName: "stira_location_check"
+  frequency: Duration(minutes: 5)
+  constraints: Constraints(networkType: NetworkType.not_required)
+  existingWorkPolicy: ExistingWorkPolicy.keep
+
+Add a static method checkLocation() called from the background task. This method:
+
+1. Gets the current device position using Geolocator.getCurrentPosition with
+   desiredAccuracy: LocationAccuracy.medium and a timeLimit of 10 seconds.
+   If this throws any exception, return silently — location not available.
+
+2. Reads all danger zones and safe zones from stira_prefs. Each zone is a Map
+   with fields: "name" (String), "lat" (double), "lng" (double),
+   "radius_meters" (double), "is_danger" (bool), "id" (String).
+
+3. For each zone, calculate the distance in meters between the current position
+   and the zone's lat/lng using Geolocator.distanceBetween().
+
+4. If distance <= zone radius:
+   a. Check last_fired_{zone_id} in stira_prefs. If this timestamp exists and
+      is less than 6 hours ago, skip this zone. This prevents spam.
+   b. If the zone is_danger is true:
+      - Call NotificationService.fireSOSHeartbeat()
+      - Wait 2 seconds using Future.delayed(Duration(seconds: 2))
+      - Call NotificationService.showNow with:
+          id: ID_DANGER_ZONE
+          title and body from Messages.dangerZone(zone["name"])
+          channelId: "stira_critical"
+          payload: "/tools"
+      - Increment the zone's trigger_count in stira_prefs by 1.
+   c. If the zone is_danger is false (Safe Zone):
+      - Call NotificationService.showNow with:
+          id: ID_SAFE_ZONE
+          title and body from Messages.safeZone(zone["name"])
+          channelId: "stira_low"
+          payload: "/home"
+   d. Write the current timestamp to last_fired_{zone_id} in stira_prefs.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 9 — WIRE EVERYTHING INTO main.dart
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find main.dart. Add or update the following inside the main() function, before
+runApp(). Keep all existing initialization code. Only add what is missing.
+
+Add these calls in this exact order after WidgetsFlutterBinding.ensureInitialized():
+
+  // Must be first — registers the background task handler
+  Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+
+  // Initialize notification channels and local plugin
+  await NotificationService.initialize();
+
+  // Request notification permission (only shows dialog on first launch)
+  await NotificationService.requestPermission();
+
+  // Start the 15-minute intelligence background cycle
+  await StiraIntelligenceEngine.startBackgroundCycle();
+
+  // Start the 5-minute location monitoring cycle
+  await StiraLocationMonitor.initialize();
+
+  // React to app open — cancel stale disengagement notifications
+  StiraIntelligenceEngine.reactToAction(UserAction.appOpened);
+
+Also add this import at the top of main.dart:
+  import 'services/stira_intelligence_engine.dart';
+
+Wrap the app in a StatefulWidget that extends WidgetsBindingObserver if not
+already done. In didChangeAppLifecycleState, when state == AppLifecycleState.resumed,
+call StiraIntelligenceEngine.reactToAction(UserAction.appOpened) so that
+returning to the app also cancels stale disengagement notifications.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 10 — WIRE REAL-TIME CALLS INTO ALL UI SCREENS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Find every place in the codebase where a check-in is saved, a relapse is logged,
+or a commitment is saved. Add the corresponding reactToAction call immediately
+after the Hive write completes. Do not add it before — the behaviour reader
+must be able to read the new data when it is called.
+
+
+IN CHECK-IN SUBMISSION CODE:
+After writing the check-in to stira_logs (the Hive write line), add:
+  StiraIntelligenceEngine.reactToAction(UserAction.checkInSubmitted);
+
+This must be called as an unawaited call or with await if the method is async.
+It cancels the check-in reminder immediately and schedules the follow-up.
+
+
+IN RELAPSE LOG CODE:
+After writing the relapse to stira_logs and updating stira_prefs, add:
+  await StiraIntelligenceEngine.reactToAction(UserAction.relapseLogged);
+
+This fires the compassionate post-relapse notification within seconds.
+
+
+IN COMMITMENT SAVE CODE (Same Time Tomorrow feature):
+After writing the commitment to stira_logs, add:
+  await StiraIntelligenceEngine.reactToAction(UserAction.commitmentSaved);
+
+This schedules the 24-hour follow-up notification immediately.
+
+
+CRITICAL — HIVE SYNC REQUIREMENT:
+Check every place where check-in data is currently written. If it is written
+ONLY to Firestore and NOT to Hive (stira_logs), the intelligence engine will
+have no data to read and all behaviour-based notifications will fail.
+
+For every Firestore check-in write, add a parallel Hive write that saves at
+minimum these fields to stira_logs:
+  {
+    "type": "checkin",
+    "timestamp": DateTime.now().toIso8601String(),
+    "urge_level": urgeLevel,   // the integer value from the dial
+    "triggers": triggersList,  // List<String> of selected trigger chips
+    "location": locationString // String like "Home", "Work", "Bedroom"
+  }
+
+Similarly, for every Firestore relapse write, add a Hive write to stira_logs:
+  {
+    "type": "relapse",
+    "timestamp": DateTime.now().toIso8601String(),
+  }
+
+For dopamine journal entries, add a Hive write to stira_logs:
+  {
+    "type": "journal",
+    "date": DateTime.now().toIso8601String(),
+    "category": selectedCategory,
+  }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STEP 11 — VERIFICATION AND TESTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+After completing all steps, verify each of the following on a real Android
+device. Do not test notifications on a simulator. Do not mark any item as
+passing unless it was actually tested.
+
+TEST 1 — BUILD:
+Run flutter build apk --debug. Confirm it exits with zero errors. If there are
+any errors, fix them before continuing.
+
+TEST 2 — CHANNELS CREATED:
+Open the app. Go to Android Settings > Apps > Stira > Notifications. Confirm
+three notification channels exist: Stira Alerts, Stira Reminders, Stira Updates.
+If only one channel or no channels appear, the channel creation code in
+NotificationService.initialize() did not run. Fix before continuing.
+
+TEST 3 — IMMEDIATE NOTIFICATION:
+Add a temporary button to any screen that calls:
+  NotificationService.showNow(999, "Test", "This is a test notification",
+    "stira_high", "/home")
+Tap the button. The notification must appear as a heads-up banner at the top of
+the screen within 1 second. It must appear whether the app is in the foreground
+or background. If it only appears in the notification shade and does not pop up
+as a banner, the channel importance is wrong — it must be Importance.high or
+Importance.max.
+
+TEST 4 — SCHEDULED NOTIFICATION:
+Add a temporary button that calls:
+  NotificationService.scheduleAt(998, "Scheduled Test",
+    "This fired on schedule", DateTime.now().add(Duration(seconds: 30)),
+    "stira_high", "/home")
+Tap the button, then completely close the app (swipe away from recent apps).
+Wait 30 seconds. The notification must arrive. If it does not arrive, the
+exact alarm permission is missing or the receiver declarations in
+AndroidManifest.xml are incorrect.
+
+TEST 5 — REAL-TIME REACTION:
+Submit a check-in with urge level 5. Confirm in Flutter logs that
+reactToAction(UserAction.checkInSubmitted) was called. Confirm that
+ID_CHECKIN_REMINDER is cancelled (it should not appear later). Confirm that a
+follow-up notification is scheduled for 4 hours from now — check this by
+printing the list of pending notifications using
+flutterLocalNotificationsPlugin.pendingNotificationRequests().
+
+TEST 6 — HIGH URGENCY REACTION:
+Submit a check-in with urge level 8 or higher. Confirm the SOS heartbeat
+vibration pattern fires (3 short, pause, 1 long, pause, 3 short).
+
+TEST 7 — RELAPSE NOTIFICATION:
+Log a relapse using the Reset button. Confirm within 5 seconds a notification
+appears with the compassionate copy: "Day 1 again. That's okay."
+
+TEST 8 — BACKGROUND CYCLE:
+Leave the app closed for at least 15 minutes. Confirm a notification arrives
+without opening the app. If no notification arrives after 20 minutes, print
+the workmanager task status using Workmanager().printScheduledTasks() and
+check that the task is registered. On Android 12+, confirm that exact alarm
+permission is granted in battery settings.
+
+TEST 9 — THROTTLE:
+Send 2 notifications manually using showNow. Attempt to send a 3rd. Confirm the
+3rd is blocked (canSend returns false). Confirm the daily counter resets to 0
+the following morning.
+
+TEST 10 — DANGER ZONE:
+Pin a test danger zone at the user's current location with a 200m radius. Wait
+up to 10 minutes for the location check cycle to run. Confirm the SOS heartbeat
+fires followed by the danger zone notification. Then confirm that the same zone
+does not fire again for 6 hours.
+
+Report the result of each test. If any test fails, fix the root cause and retest
+before marking it complete.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF PROMPT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

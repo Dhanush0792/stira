@@ -1,0 +1,63 @@
+﻿
+
+stira
+Notification Intelligence Layer
+100% Local  ╖  Zero Firebase Cost  ╖  Real-time Behaviour Analysis  ╖  Complete Antigravity Build Prompt
+
+
+
+
+Architecture Overview
+
+
+Six files work together as one system. Each has a single responsibility. They communicate through Hive (local storage) ù no network calls between them.
+
+Step 1 ù Packages & Permissions
+
+
+
+
+
+Step 2 ù StiraNotificationService
+
+
+
+
+
+Step 3 ù StiraBehaviourAnalyser
+
+
+
+
+
+Step 4 ù StiraThrottleManager + StiraNotificationCopy
+
+
+
+
+
+Step 5 ù StiraIntelligenceEngine
+
+
+
+
+
+Step 6 ù StiraLocationMonitor
+
+
+
+
+
+Step 7 ù Wire Everything Into main.dart + UI Integration
+
+
+
+
+Verification Checklist
+
+
+Test every item on a real Android device. Do not test on simulator for notification delivery.
+
+
+
+Stira Notification Intelligence Layer  ╖  100% Local  ╖  Zero Firebase Cost  ╖  6 Files  ╖  7 Steps  ╖  22 Verification Checks

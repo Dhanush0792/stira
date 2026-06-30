@@ -1,0 +1,898 @@
+[
+  {
+    "style": "Normal",
+    "text": "stira"
+  },
+  {
+    "style": "Normal",
+    "text": "Behavioral Intelligence · Mobile App"
+  },
+  {
+    "style": "Normal",
+    "text": "Document Purpose"
+  },
+  {
+    "style": "Normal",
+    "text": "This document is the complete feature plan for the Stira mobile app (Flutter). It is organized as a developer and product reference — every feature is described with its screen location, exact interactions, Flutter implementation notes, and build priority. This is a living document; version 1.0."
+  },
+  {
+    "style": "Normal",
+    "text": "Market Research Base: Quittr · Fortify · Brainbuddy · BeatIt · Relay · Covenant Eyes · Ever Accountable · Rewire · NoFap Emergency · MDF · Quitzilla · Canopy"
+  },
+  {
+    "style": "Heading 1",
+    "text": "1.  App Navigation Map"
+  },
+  {
+    "style": "Normal",
+    "text": "Stira uses a 4-tab bottom navigation bar as the core navigation spine. All features are reachable within 2 taps from any screen. This structure is fixed — do not add a 5th tab."
+  },
+  {
+    "style": "Heading 1",
+    "text": "2.  Core Features  (Must-Have)"
+  },
+  {
+    "style": "Normal",
+    "text": "These 8 features are the foundation. Every competitor has a weak version of most of these. Stira's job is to do each one better, deeper, and more human."
+  },
+  {
+    "style": "Heading 1",
+    "text": "3.  New Features  (Competitors Lack These)"
+  },
+  {
+    "style": "Normal",
+    "text": "These 5 features exist in weak or broken forms across competitors. Stira builds them properly — with mobile-native interactions, AI integration, and design that makes them actually useful."
+  },
+  {
+    "style": "Heading 1",
+    "text": "4.  ★ Signature Features  (Nobody Has These)"
+  },
+  {
+    "style": "Normal",
+    "text": "These 6 features have never been built in any recovery app. They are Stira's competitive moat — the reason users will never switch to another app. Each one is a new category, not a variation on an existing idea."
+  },
+  {
+    "style": "Heading 1",
+    "text": "5.  Market Comparison"
+  },
+  {
+    "style": "Normal",
+    "text": "✓ = Full feature    ~  = Partial or weak version    ✗ = Not present    ★ = Stira exclusive"
+  },
+  {
+    "style": "Heading 1",
+    "text": "6.  Build Roadmap"
+  },
+  {
+    "style": "Normal",
+    "text": "Ship in this order. Phase 1 makes Stira usable. Phase 2 makes it smart. Phase 3 makes it irreplaceable. Phase 4 makes it legendary. Do not skip phases."
+  },
+  {
+    "style": "Heading 1",
+    "text": "7.  Flutter Packages Reference"
+  },
+  {
+    "style": "Normal",
+    "text": "All packages listed below are pub.dev verified and actively maintained as of 2025."
+  },
+  {
+    "style": "Normal",
+    "text": "Stira — End of Feature Plan  v1.0"
+  },
+  {
+    "style": "Normal",
+    "text": "19 features · 6 signature exclusives · Built for Flutter · Designed for recovery"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 1 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "19\nTotal Features | 8\nCore Features | 5\nNew Features | 6\n★ Signature Only"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 2 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "TAB | SCREEN NAME | ACCENT COLOR | SCREENS WITHIN"
+  },
+  {
+    "style": "TableRow",
+    "text": "1 | Home | Pink  #E8307A | Dashboard · Check-in · Relapse Log · Forecast"
+  },
+  {
+    "style": "TableRow",
+    "text": "2 | Insights | Violet  #7C4DFF | Analytics · Rewire Map · Weekly Report · Dopamine Journal"
+  },
+  {
+    "style": "TableRow",
+    "text": "3 | Tools | Teal  #1ECFB3 | Breathing · Vault · Mirror Protocol · Replacement Habits · Bond Mode"
+  },
+  {
+    "style": "TableRow",
+    "text": "4 | Profile | Amber  #F5A623 | Settings · Danger Zones · Identity Builder · Streak Insurance · Shadow Mode"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 3 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-01 | 🔥  Streak Intelligence | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Not just a number — a living streak system that tracks context, protects milestones, and builds identity. The counter shows days, hours, and minutes. | Not just a number — a living streak system that tracks context, protects milestones, and builds identity. The counter shows days, hours, and minutes."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Real-time counter: days, hours, minutes on dashboard home screen | ›  Real-time counter: days, hours, minutes on dashboard home screen"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Personal best comparison shown below current streak (e.g. \"Best: 18d\") | ›  Personal best comparison shown below current streak (e.g. \"Best: 18d\")"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Milestone celebrations at 3 / 7 / 14 / 30 / 60 / 90 / 180 / 365 days — full-screen animation | ›  Milestone celebrations at 3 / 7 / 14 / 30 / 60 / 90 / 180 / 365 days — full-screen animation"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Streak trajectory graph: are your average streaks getting longer? | ›  Streak trajectory graph: are your average streaks getting longer?"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Total clean days preserved even after a reset — never loses history | ›  Total clean days preserved even after a reset — never loses history"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Flutter widget: AnimatedSwitcher for live time updates every minute | ›  Flutter widget: AnimatedSwitcher for live time updates every minute"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Home Tab       Notifications       Dashboard Widget | Home Tab       Notifications       Dashboard Widget"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 4 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-02 | 📋  Behavioral Check-in | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | A 30-second radial-dial check-in capturing intensity, trigger, location, and mood. This is Stira's primary data input — every insight and prediction runs on this data. | A 30-second radial-dial check-in capturing intensity, trigger, location, and mood. This is Stira's primary data input — every insight and prediction runs on this data."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Rotary dial gesture: drag to set urge intensity 1–10 with HapticFeedback.selectionClick() | ›  Rotary dial gesture: drag to set urge intensity 1–10 with HapticFeedback.selectionClick()"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Trigger chips (multi-select): Boredom / Stress / Loneliness / Habit / Fatigue / Social Media | ›  Trigger chips (multi-select): Boredom / Stress / Loneliness / Habit / Fatigue / Social Media"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Location context: auto-detected or manual — Bedroom / Home / Work / Outside / Car | ›  Location context: auto-detected or manual — Bedroom / Home / Work / Outside / Car"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Mood tag: Anxious / Bored / Lonely / Restless / Good | ›  Mood tag: Anxious / Bored / Lonely / Restless / Good"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Optional 1-line free-text note for context | ›  Optional 1-line free-text note for context"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Accessible from Home tab button AND by tapping the orb directly | ›  Accessible from Home tab button AND by tapping the orb directly"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Check-in data updates the dashboard orb color and intensity live | ›  Check-in data updates the dashboard orb color and intensity live"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Home Tab       AI Data Input       Pattern Engine | Home Tab       AI Data Input       Pattern Engine"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 5 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-03 | 🔮  AI Forecast Engine | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | After 3 days of check-ins, Stira starts predicting your high-risk windows 4–6 hours ahead using your unique time, location, trigger, and mood patterns. | After 3 days of check-ins, Stira starts predicting your high-risk windows 4–6 hours ahead using your unique time, location, trigger, and mood patterns."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Risk timeline bar on dashboard: next 6 hours color-coded low/moderate/high | ›  Risk timeline bar on dashboard: next 6 hours color-coded low/moderate/high"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Proactive push notification 30–45 min before predicted window | ›  Proactive push notification 30–45 min before predicted window"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Confidence score shown: \"85% likely — based on your Tuesday pattern\" | ›  Confidence score shown: \"85% likely — based on your Tuesday pattern\""
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Forecast card on dashboard uses amber accent — NO lock icon (core feature, not premium) | ›  Forecast card on dashboard uses amber accent — NO lock icon (core feature, not premium)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  After 7 days: forecast accuracy score shown in Insights | ›  After 7 days: forecast accuracy score shown in Insights"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Flutter: local ML model (tflite) trained on user's own check-in data | ›  Flutter: local ML model (tflite) trained on user's own check-in data"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Home Tab       Push Notifications       AI / ML | Home Tab       Push Notifications       AI / ML"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 6 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-04 | 📊  Behavioral Insights | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | A deep-dive into behavioral patterns — not just streak counts. Shows WHEN, WHY, and WHERE vulnerability is highest, with charts that improve every week. | A deep-dive into behavioral patterns — not just streak counts. Shows WHEN, WHY, and WHERE vulnerability is highest, with charts that improve every week."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  7-day urge intensity bar chart (violet bars, teal for today) | ›  7-day urge intensity bar chart (violet bars, teal for today)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  24-hour heatmap: which hours are most stable vs most vulnerable | ›  24-hour heatmap: which hours are most stable vs most vulnerable"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Top triggers breakdown with percentage share and color-coded pill tags | ›  Top triggers breakdown with percentage share and color-coded pill tags"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Location risk map: which pinned locations have the most check-ins | ›  Location risk map: which pinned locations have the most check-ins"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Stability score (0–100) with weekly delta arrow (↑ or ↓) | ›  Stability score (0–100) with weekly delta arrow (↑ or ↓)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Monthly trend: is average intensity improving over 90 days? | ›  Monthly trend: is average intensity improving over 90 days?"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  All charts built with fl_chart Flutter package | ›  All charts built with fl_chart Flutter package"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Insights Tab       Weekly Report | Insights Tab       Weekly Report"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 7 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-05 | 🧰  Intervention Toolkit | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Six in-the-moment tools for when the urge hits. Auto-surfaced when check-in intensity is 7+. Each tool is designed to interrupt the autopilot loop within 90 seconds. | Six in-the-moment tools for when the urge hits. Auto-surfaced when check-in intensity is 7+. Each tool is designed to interrupt the autopilot loop within 90 seconds."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  90-second Reset Protocol: animated breathing circle (expand/contract) + countdown timer | ›  90-second Reset Protocol: animated breathing circle (expand/contract) + countdown timer"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  4-4-4 Breathing: guided animated dial — Inhale 4s / Hold 4s / Exhale 4s | ›  4-4-4 Breathing: guided animated dial — Inhale 4s / Hold 4s / Exhale 4s"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Cold water cue: custom vibration burst + \"Go splash cold water on your face\" card | ›  Cold water cue: custom vibration burst + \"Go splash cold water on your face\" card"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  5-minute walk redirect: opens device Maps to nearest park or open space | ›  5-minute walk redirect: opens device Maps to nearest park or open space"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Vault replay: reads most recent vault letter (TTS optional) | ›  Vault replay: reads most recent vault letter (TTS optional)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Distraction challenge: 2-minute cognitive task — math sequence, trivia, or memory game | ›  Distraction challenge: 2-minute cognitive task — math sequence, trivia, or memory game"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Tool completion → teal pulse animation + \"Streak protected.\" confirmation | ›  Tool completion → teal pulse animation + \"Streak protected.\" confirmation"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Tools Tab       Auto-Surface on High Intensity       Crisis Path | Tools Tab       Auto-Surface on High Intensity       Crisis Path"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 8 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-06 | 🗝️  The Vault | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | A locked archive of letters users write to their future selves during stable moments. Automatically unlocks and replays during danger zone entry or high-intensity check-ins. | A locked archive of letters users write to their future selves during stable moments. Automatically unlocks and replays during danger zone entry or high-intensity check-ins."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Distraction-free letter composer: warm amber background, no distractions, full-screen | ›  Distraction-free letter composer: warm amber background, no distractions, full-screen"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Letters tagged by emotional state at time of writing (\"Wrote this feeling strong\") | ›  Letters tagged by emotional state at time of writing (\"Wrote this feeling strong\")"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Archive view: all letters with dates, tags, and preview text | ›  Archive view: all letters with dates, tags, and preview text"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Auto-surface: when intensity ≥ 8 or danger zone entered → Vault letter shown first | ›  Auto-surface: when intensity ≥ 8 or danger zone entered → Vault letter shown first"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Optional read-aloud via flutter_tts package | ›  Optional read-aloud via flutter_tts package"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Vault entry in Profile menu with description: \"Letters to your future self\" | ›  Vault entry in Profile menu with description: \"Letters to your future self\""
+  },
+  {
+    "style": "TableRow",
+    "text": " | Tools Tab       Profile       Crisis Auto-Surface | Tools Tab       Profile       Crisis Auto-Surface"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 9 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-07 | 📍  Danger Zones + Safe Zones | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Users pin high-risk physical locations. Stira monitors proximity and triggers an SOS Heartbeat vibration on entry. Safe Zones provide positive reinforcement when visited. | Users pin high-risk physical locations. Stira monitors proximity and triggers an SOS Heartbeat vibration on entry. Safe Zones provide positive reinforcement when visited."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Pin current location OR search + pin any address | ›  Pin current location OR search + pin any address"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Adjustable radius per zone: 50m / 100m / 200m | ›  Adjustable radius per zone: 50m / 100m / 200m"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Per-zone trigger count: \"8x triggered this month\" — ranked by danger level | ›  Per-zone trigger count: \"8x triggered this month\" — ranked by danger level"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Safe Zone feature: pin locations that make you feel strong (gym, library, mosque) | ›  Safe Zone feature: pin locations that make you feel strong (gym, library, mosque)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Safe zone entry → positive notification: \"You're in a strong place. Stay here.\" | ›  Safe zone entry → positive notification: \"You're in a strong place. Stay here.\""
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Mini map preview in Danger Zones screen (flutter_map + OpenStreetMap) | ›  Mini map preview in Danger Zones screen (flutter_map + OpenStreetMap)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Background location service: geolocator package with background_location | ›  Background location service: geolocator package with background_location"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Profile (sub-screen)       Background Service       Location | Profile (sub-screen)       Background Service       Location"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 10 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-08 | 📝  Compassionate Relapse Log | CORE"
+  },
+  {
+    "style": "TableRow",
+    "text": " | When a relapse happens, Stira does not punish — it learns. The log captures what happened without shame language, feeds the AI, and offers immediate support. | When a relapse happens, Stira does not punish — it learns. The log captures what happened without shame language, feeds the AI, and offers immediate support."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  No red screens, no shame copy — warm neutral language throughout | ›  No red screens, no shame copy — warm neutral language throughout"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Quick log: timestamp + trigger chip + optional note | ›  Quick log: timestamp + trigger chip + optional note"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  \"What could have stopped this?\" reflection prompt after logging | ›  \"What could have stopped this?\" reflection prompt after logging"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Pattern analysis: after 3+ relapses, shows most common conditions | ›  Pattern analysis: after 3+ relapses, shows most common conditions"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Streak resets but total clean days and all history is preserved forever | ›  Streak resets but total clean days and all history is preserved forever"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Immediate post-relapse intervention card: offers breathing, vault, or SOS Heartbeat | ›  Immediate post-relapse intervention card: offers breathing, vault, or SOS Heartbeat"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Accessible via Home tab \"Reset\" button — requires confirmation dialog first | ›  Accessible via Home tab \"Reset\" button — requires confirmation dialog first"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Home Tab       AI Data Feed       Insights | Home Tab       AI Data Feed       Insights"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 11 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-09 | 📱  Screen Time Correlation | NEW"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Connects to iOS Screen Time and Android Digital Wellbeing APIs to find the link between heavy app usage and urge spikes. Shows exactly which apps trigger you most. | Connects to iOS Screen Time and Android Digital Wellbeing APIs to find the link between heavy app usage and urge spikes. Shows exactly which apps trigger you most."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  iOS integration: ScreenTime API / Android: UsageStatsManager | ›  iOS integration: ScreenTime API / Android: UsageStatsManager"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Overlay screen time data on the 7-day urge intensity chart in Insights | ›  Overlay screen time data on the 7-day urge intensity chart in Insights"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Surface automatic insight: \"High urges follow 2h+ of Reels 78% of the time\" | ›  Surface automatic insight: \"High urges follow 2h+ of Reels 78% of the time\""
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  App-specific risk warnings: \"Instagram after 10 PM is your #1 trigger app\" | ›  App-specific risk warnings: \"Instagram after 10 PM is your #1 trigger app\""
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Optional: suggest app time limits for identified trigger apps via device Settings | ›  Optional: suggest app time limits for identified trigger apps via device Settings"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Requires user permission — clearly explained, never shared | ›  Requires user permission — clearly explained, never shared"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Insights Tab       iOS / Android API       AI Analysis | Insights Tab       iOS / Android API       AI Analysis"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 12 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-10 | 🔄  Replacement Habit Engine | NEW"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Every urge is a displaced need. Stira identifies what the user actually needs — stimulation, calm, connection, or escape — and routes them toward a habit that satisfies the same need without the damage. | Every urge is a displaced need. Stira identifies what the user actually needs — stimulation, calm, connection, or escape — and routes them toward a habit that satisfies the same need without the damage."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Onboarding step maps core needs: Stimulation / Calm / Connection / Escape / Achievement | ›  Onboarding step maps core needs: Stimulation / Calm / Connection / Escape / Achievement"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  When urge hits: AI suggests the replacement habit that meets the detected need | ›  When urge hits: AI suggests the replacement habit that meets the detected need"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Built-in habit library: cold shower, 10 pushups, call someone, draw, journal, cook | ›  Built-in habit library: cold shower, 10 pushups, call someone, draw, journal, cook"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  User can create custom replacement habits with their own name + need tag | ›  User can create custom replacement habits with their own name + need tag"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Track which habits actually work — success rate shown per habit in Insights | ›  Track which habits actually work — success rate shown per habit in Insights"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Habit completion → small reward animation + streak protection credit | ›  Habit completion → small reward animation + streak protection credit"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Tools Tab       AI-Driven       Onboarding | Tools Tab       AI-Driven       Onboarding"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 13 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-11 | 🧬  Identity Builder | NEW"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Recovery is not about quitting — it is about becoming someone who does not need it. Identity Builder helps users write a new identity through affirmations, values definition, and a personal code. | Recovery is not about quitting — it is about becoming someone who does not need it. Identity Builder helps users write a new identity through affirmations, values definition, and a personal code."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Onboarding: \"Who are you becoming?\" — user writes 3 identity statements | ›  Onboarding: \"Who are you becoming?\" — user writes 3 identity statements"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Values card: pick 3 words that define the person you are becoming | ›  Values card: pick 3 words that define the person you are becoming"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Daily identity push at user's most vulnerable predicted time window | ›  Daily identity push at user's most vulnerable predicted time window"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  \"I am someone who...\" — different completion prompt each day | ›  \"I am someone who...\" — different completion prompt each day"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Streak milestone = unlock a new identity affirmation card (collectible) | ›  Streak milestone = unlock a new identity affirmation card (collectible)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Identity cards stored in Profile — always accessible for moments of doubt | ›  Identity cards stored in Profile — always accessible for moments of doubt"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Profile Tab       Onboarding       Daily Notifications | Profile Tab       Onboarding       Daily Notifications"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 14 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-12 | 📔  Dopamine Journal | NEW"
+  },
+  {
+    "style": "TableRow",
+    "text": " | A private daily journal for tracking what gave real dopamine today — not porn. Over time it builds undeniable proof that real life is more rewarding than the alternative. | A private daily journal for tracking what gave real dopamine today — not porn. Over time it builds undeniable proof that real life is more rewarding than the alternative."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Prompt: \"What gave me real dopamine today?\" — 1–3 sentences max | ›  Prompt: \"What gave me real dopamine today?\" — 1–3 sentences max"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Entry categories: Exercise / Connection / Achievement / Creativity / Nature / Food / Rest | ›  Entry categories: Exercise / Connection / Achievement / Creativity / Nature / Food / Rest"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Monthly \"Real Rewards\" summary: proof your life is improving without the habit | ›  Monthly \"Real Rewards\" summary: proof your life is improving without the habit"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Entries are private by default; shareable as anonymous card (optional) | ›  Entries are private by default; shareable as anonymous card (optional)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Missed journal reminder at 9 PM daily if no entry logged | ›  Missed journal reminder at 9 PM daily if no entry logged"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Journal entries shown as dots on the monthly calendar view in Insights | ›  Journal entries shown as dots on the monthly calendar view in Insights"
+  },
+  {
+    "style": "TableRow",
+    "text": " | Insights Tab       Tools Tab       Daily Notification | Insights Tab       Tools Tab       Daily Notification"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 15 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "F-13 | 📅  Weekly Stability Report | NEW"
+  },
+  {
+    "style": "TableRow",
+    "text": " | A beautiful Sunday narrative digest — not a table of numbers. Written by Stira's AI in warm human language. One win, one challenge, one focus area for the coming week. | A beautiful Sunday narrative digest — not a table of numbers. Written by Stira's AI in warm human language. One win, one challenge, one focus area for the coming week."
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  AI-generated narrative paragraph about the user's week (Claude API or on-device LLM) | ›  AI-generated narrative paragraph about the user's week (Claude API or on-device LLM)"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Most vulnerable day + most stable day highlighted with amber/teal chips | ›  Most vulnerable day + most stable day highlighted with amber/teal chips"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Top trigger of the week + one specific recommendation | ›  Top trigger of the week + one specific recommendation"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Stability trend indicator: Improving / Holding / Needs Attention | ›  Stability trend indicator: Improving / Holding / Needs Attention"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Optional shareable card (anonymous) for accountability partner | ›  Optional shareable card (anonymous) for accountability partner"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Accessible from Insights tab CTA card — NOT buried in Profile submenu | ›  Accessible from Insights tab CTA card — NOT buried in Profile submenu"
+  },
+  {
+    "style": "TableRow",
+    "text": " | ›  Sunday push notification at 8 AM: \"Your week in review is ready\" | ›  Sunday push notification at 8 AM: \"Your week in review is ready\""
+  },
+  {
+    "style": "TableRow",
+    "text": " | Insights Tab       Sunday Push       AI Writing | Insights Tab       Sunday Push       AI Writing"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 16 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  SIGNATURE FEATURE  SIG-01\n🧠  The Rewire Map\nA visual brain map showing how the user's neural patterns are literally changing over time. As clean days accumulate, new pathways light up and old ones fade. It makes neuroplasticity visible, personal, and beautiful — turning recovery into something you can see with your own eyes.\n\nHOW IT WORKS IN THE APP\nScreen location: Insights Tab > \"Rewire Map\" section. A stylized (non-medical) brain illustration with two pathway systems: Old Pathways (faded red lines) and New Pathways (glowing teal lines). As clean days accumulate: Day 7 → first new pathway lights up with animation. Day 30 → 4 new pathways lit, old ones dimming. Day 90 → old pathways nearly invisible, new pathways bright. Tapping any pathway shows a card: \"This pathway represents your [day range] of growth.\" Backed by real neuroscience copy: \"Your dopamine receptors are recovering. This is what that looks like.\" Flutter: CustomPainter with animated Path drawing using AnimationController + CurvedAnimation."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 17 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  SIGNATURE FEATURE  SIG-02\n💗  SOS Heartbeat\nWhen the user enters a Danger Zone or their check-in intensity hits 8+, Stira fires a specific custom vibration pattern — the SOS Heartbeat — that is physically unique and recognizable even in a pocket. It is not a notification. It is a physical interrupt that says: \"You are not your autopilot.\" No app has ever used custom haptics as a recovery signal.\n\nHOW IT WORKS IN THE APP\nTrigger conditions: (1) Danger Zone radius entered via background geolocator, (2) Check-in intensity ≥ 8 logged, (3) User manually activates from Tools tab. Haptic pattern: 3 short pulses (100ms each) → pause 200ms → 1 long pulse (600ms) → pause 200ms → 3 short pulses. Fires silently with no screen required, works when phone is locked. Flutter: vibration package with custom pattern array. Onboarding training step: \"Feel this vibration — this is your SOS Heartbeat. Learn to recognize it.\" After 5 activations, Stira asks: \"Did the heartbeat help you pause?\" — used to optimize timing. Settings: toggle on/off, adjust sensitivity threshold."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 18 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  SIGNATURE FEATURE  SIG-03\n🌑  Shadow Mode\nDisguises Stira as a completely different app on the home screen and in the Android/iOS task switcher. Solves the #1 barrier to adoption: users who live with family, share devices, or fear social stigma delete the app because someone might see it. Shadow Mode gives privacy without hiding.\n\nHOW IT WORKS IN THE APP\nScreen location: Profile Tab > Settings > \"Shadow Mode.\" User selects a disguise identity from a list: Weather App / Calculator / Finance Tracker / Notes App / Clock. The Flutter launcher icon, app name in task switcher, and splash screen all change to the selected disguise. Activation gesture: triple-tap the disguised icon (configured once during Shadow Mode setup). Inside: Stira runs completely normally. Implementation: flutter_launcher_icons for static icons; for dynamic icon change use iOS alternate icons API (UIApplication.setAlternateIconName) and Android shortcut/alias approach. The task switcher name change requires platform channels to call setTaskDescription on Android. This is a technically complex but buildable feature with major retention impact."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 19 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  SIGNATURE FEATURE  SIG-04\n🪞  The Mirror Protocol\nA timed, camera-facing self-confrontation exercise for moments of high temptation. The user holds the phone camera facing themselves for 60 seconds while Stira overlays reflective questions. Looking at yourself in the moment of urge is one of the most powerful pattern interrupts in behavioral science — and no app has ever built it as a mobile feature.\n\nHOW IT WORKS IN THE APP\nScreen location: Tools Tab > \"Mirror Protocol\" (shown prominently when intensity ≥ 7). Opens front camera full-screen using camera package. 60-second countdown timer in top-right corner. NO recording, no storage — live only. Question overlay sequence every 15 seconds: (0s) \"How do you feel right now?\" (15s) \"What are you actually looking for?\" (30s) \"Who are you in this moment?\" (45s) \"What will you feel in 10 minutes if you stop?\" On completion at 60s: camera closes, orb turns teal, text appears: \"You stayed. That's who you are.\" Session logged as a tool use (not stored, only counted). Privacy statement shown before first use: \"This is never recorded or stored. It is only for you.\""
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 20 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  SIGNATURE FEATURE  SIG-05\n🛡️  Streak Insurance\nThe #1 reason users quit recovery apps is losing a long streak to one moment of weakness and feeling like there is no point continuing. Streak Insurance lets users protect their streak once per milestone — not forgiving the relapse, but preventing the app abandonment that follows it. Research shows keeping users engaged after relapse dramatically improves long-term recovery outcomes.\n\nHOW IT WORKS IN THE APP\nEarn mechanic: unlocked at Day 14, Day 30, and Day 60 milestones (one insurance per milestone = up to 3 total per recovery cycle). Usage: after a relapse, a special screen appears before the streak resets — \"You have Streak Insurance available. Use it?\" If activated: streak counter does not reset. The relapse is logged in full (still visible in Insights, still feeds the AI, still counted in relapse data). The streak number shows a small amber shield icon (🛡) for 7 days after use. If not activated: normal streak reset. Messaging: \"This is not forgiveness. It is resilience. One slip does not define your recovery.\" Available once per milestone only — clearly communicated. This is fundamentally different from \"forgiveness\" features — it is designed to keep users in the app and in recovery after a vulnerable moment."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 21 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  SIGNATURE FEATURE  SIG-06\n🤝  Bond Mode\nA completely private two-person accountability system — no community, no groups, no strangers. Bond Mode connects two people who support each other with only the data each person chooses to share. It is deeper than any group chat, more private than any forum, and the opposite of surveillance-based accountability apps like Covenant Eyes.\n\nHOW IT WORKS IN THE APP\nSetup: user generates a 6-digit Bond Code. Shares it with one trusted person (friend, partner, sibling). Bond partner installs Stira and enters the code. Connection established — fully encrypted, peer-to-peer via Firebase or Supabase Realtime. Privacy controls: each person independently chooses what their bond partner sees — Streak only / Streak + check-in intensity / Full insights. Bond partner receives a notification when the user's intensity hits 7+: \"[Your person] might need you right now.\" Bond partner can send a pre-written encouragement (\"You've got this\") or a custom message. No browsing history, no screen monitoring, no screenshots — zero surveillance. One bond per account (not a social network). Bond can be ended by either person at any time. Screen location: Tools Tab > \"Bond Mode.\" Completely different value proposition from Relay (group) or Covenant Eyes (surveillance)."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 22 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "Feature | Stira | Quittr | Fortify | Brain\nbuddy | BeatIt | Relay | Cov.\nEyes"
+  },
+  {
+    "style": "TableRow",
+    "text": "Streak tracking | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Behavioral check-in (detailed) | ✓ | ~ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "AI / predictive forecast | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Behavioral analytics + heatmap | ✓ | ~ | ~ | ~ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Breathing / intervention tools | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Vault / future self messages | ✓ | ✗ | ~ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Location-aware danger zones | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Compassionate relapse logging | ✓ | ~ | ✓ | ~ | ~ | ~ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Screen time correlation | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Replacement habit engine | ✓ | ~ | ~ | ✗ | ~ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Identity builder | ✓ | ✗ | ~ | ✗ | ~ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Dopamine journal | ✓ | ~ | ✓ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "Weekly AI-written report | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  Rewire Map (brain visual) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  SOS Heartbeat (haptics) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  Shadow Mode (app disguise) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  Mirror Protocol (camera) | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  Streak Insurance | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗"
+  },
+  {
+    "style": "TableRow",
+    "text": "★  Bond Mode (private 2-person) | ✓ | ✗ | ✗ | ~ | ✗ | ✓ | ✓"
+  },
+  {
+    "style": "TableRow",
+    "text": "Premium design quality | ✓ | ~ | ✗ | ~ | ~ | ✗ | ✗"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 23 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "Phase 1\nFoundation\nMonth 1–2\nShip Now | ›  Fix all 9 existing bugs (keyboard overlap, button styles, empty states)\n›  Apply full glassmorphism design system to all screens\n›  Streak Intelligence with milestone animations\n›  Behavioral Check-in with radial dial + haptics\n›  Intervention Toolkit (breathing, vault, cold water, walk redirect)\n›  Compassionate Relapse Logging\n›  Danger Zones + Safe Zones with background location service\n›  The Vault with letter composer and auto-surface logic"
+  },
+  {
+    "style": "TableRow",
+    "text": "Phase 2\nIntelligence\nMonth 2–4\nHigh Priority | ›  AI Forecast Engine — predict windows 4–6h ahead (tflite on-device)\n›  Behavioral Insights: heatmap, trigger breakdown, 7-day chart\n›  Replacement Habit Engine with need-mapping from onboarding\n›  Dopamine Journal with category tags and calendar view\n›  Screen Time Correlation (iOS Screen Time + Android UsageStats APIs)\n›  Identity Builder with milestone-unlockable affirmation cards\n›  Weekly Stability Report (AI-written, Sunday push notification)"
+  },
+  {
+    "style": "TableRow",
+    "text": "Phase 3\nSignature\nMonth 4–7\nDifferentiators | ›  ★  SOS Heartbeat — custom vibration pattern via vibration package\n›  ★  Streak Insurance — earned grace mechanic at Day 14 / 30 / 60\n›  ★  Shadow Mode — app disguise using alternate icons + platform channels\n›  ★  Bond Mode — private 2-person accountability via Supabase Realtime\n›  ★  Mirror Protocol — front camera confrontation tool (camera package)"
+  },
+  {
+    "style": "TableRow",
+    "text": "Phase 4\nLegendary\nMonth 7–12\nVision | ›  ★  Rewire Map — animated brain pathway visualization (CustomPainter)\n›  Stira Coach — AI companion (not a generic chatbot, context-aware)\n›  Apple Watch companion app — SOS Heartbeat directly on wrist\n›  Annual Recovery Story — auto-generated personal year-in-review\n›  Safe Place Network — community-verified safe public locations\n›  Full offline mode — 100% functionality without internet connection"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 24 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "Feature | Package | Notes"
+  },
+  {
+    "style": "TableRow",
+    "text": "Streak timer (live) | timer_builder | Updates every second without setState spam"
+  },
+  {
+    "style": "TableRow",
+    "text": "Radial dial / check-in | syncfusion_flutter_gauges | Or build with GestureDetector + CustomPainter"
+  },
+  {
+    "style": "TableRow",
+    "text": "Charts (insights) | fl_chart | Bar, line, scatter — fully customizable"
+  },
+  {
+    "style": "TableRow",
+    "text": "Animations | flutter_animate | Staggered entry animations for cards"
+  },
+  {
+    "style": "TableRow",
+    "text": "Background location | geolocator + background_location | For Danger Zones proximity monitoring"
+  },
+  {
+    "style": "TableRow",
+    "text": "Maps (danger zones) | flutter_map + latlong2 | OpenStreetMap — no API key needed"
+  },
+  {
+    "style": "TableRow",
+    "text": "Haptic patterns | vibration | Custom vibration array for SOS Heartbeat"
+  },
+  {
+    "style": "TableRow",
+    "text": "Local ML / forecast | tflite_flutter | On-device model, no server needed"
+  },
+  {
+    "style": "TableRow",
+    "text": "Text-to-speech (vault) | flutter_tts | For vault letter read-aloud feature"
+  },
+  {
+    "style": "TableRow",
+    "text": "Camera (mirror) | camera | Front camera access for Mirror Protocol"
+  },
+  {
+    "style": "TableRow",
+    "text": "Notifications | flutter_local_notifications | Local + scheduled push for all alerts"
+  },
+  {
+    "style": "TableRow",
+    "text": "Storage (local) | hive + hive_flutter | Fast local NoSQL for check-in data"
+  },
+  {
+    "style": "TableRow",
+    "text": "Real-time (bond mode) | supabase_flutter | Real-time channel for Bond Mode"
+  },
+  {
+    "style": "TableRow",
+    "text": "Screen time (iOS) | screen_time (custom channel) | iOS ScreenTime API via method channel"
+  },
+  {
+    "style": "TableRow",
+    "text": "Screen time (Android) | app_usage | Android UsageStatsManager wrapper"
+  },
+  {
+    "style": "TableRow",
+    "text": "App icon change | flutter_launcher_icons | Static; Shadow Mode uses platform channels"
+  },
+  {
+    "style": "TableRow",
+    "text": "Biometric lock | local_auth | FaceID / Fingerprint for app lock"
+  },
+  {
+    "style": "TableRow",
+    "text": "Google Fonts | google_fonts | Syne + DM Mono + DM Sans"
+  }
+]

@@ -1,0 +1,514 @@
+[
+  {
+    "style": "Normal",
+    "text": "stira"
+  },
+  {
+    "style": "Normal",
+    "text": "MASTER IMPLEMENTATION PROMPT"
+  },
+  {
+    "style": "Normal",
+    "text": "Complete Feature Build Guide  ·  Flutter Mobile App  ·  Version 1.0"
+  },
+  {
+    "style": "Normal",
+    "text": "How to use this document"
+  },
+  {
+    "style": "Normal",
+    "text": "This is a complete, copy-paste-ready master prompt for building the Stira mobile app. It is structured into 7 sections. Read it fully once before starting. Then paste each section into your AI builder (Antigravity / Cursor / GPT-Engineer) in order, one section at a time, confirming the build compiles before moving to the next."
+  },
+  {
+    "style": "Heading 1",
+    "text": "SECTION 0  —  Read the Codebase First"
+  },
+  {
+    "style": "Normal",
+    "text": "Paste this exactly as your first message into Antigravity before anything else:"
+  },
+  {
+    "style": "Heading 1",
+    "text": "SECTION 1  —  Global Design System Tokens"
+  },
+  {
+    "style": "Normal",
+    "text": "These tokens must be created in a single file — theme/stira_tokens.dart — and referenced everywhere. Never hardcode a color, font size, or spacing value inline anywhere in the app."
+  },
+  {
+    "style": "Heading 2",
+    "text": "PROMPT TO PASTE — SECTION 1"
+  },
+  {
+    "style": "Heading 1",
+    "text": "SECTION 2  —  Reusable Shared Components"
+  },
+  {
+    "style": "Normal",
+    "text": "These 8 components must be created once in lib/widgets/ and imported by every screen. No screen should build its own version of any of these."
+  },
+  {
+    "style": "Heading 2",
+    "text": "PROMPT TO PASTE — SECTION 2"
+  },
+  {
+    "style": "Heading 1",
+    "text": "SECTION 3  —  Screen-by-Screen Build"
+  },
+  {
+    "style": "Normal",
+    "text": "Build screens in this exact order. Do not move to the next screen until the current one compiles and renders correctly. For each screen, paste the corresponding prompt block into Antigravity."
+  },
+  {
+    "style": "Heading 2",
+    "text": "All 9 Screens at a Glance"
+  },
+  {
+    "style": "Heading 2",
+    "text": "Screen Build Instructions"
+  },
+  {
+    "style": "Heading 1",
+    "text": "SECTION 4  —  Navigation & Routing"
+  },
+  {
+    "style": "Heading 1",
+    "text": "SECTION 5  —  Animations & Micro-interactions"
+  },
+  {
+    "style": "Heading 1",
+    "text": "SECTION 6  —  Copy Fixes, Bug Fixes & Final Verification"
+  },
+  {
+    "style": "Heading 2",
+    "text": "6A.  Text / Copy Changes"
+  },
+  {
+    "style": "Normal",
+    "text": "Paste this to fix all incorrect copy strings in the existing codebase:"
+  },
+  {
+    "style": "Heading 2",
+    "text": "6B.  Bug Fixes (9 Critical Issues)"
+  },
+  {
+    "style": "Heading 2",
+    "text": "6C.  pubspec.yaml — Required Packages"
+  },
+  {
+    "style": "Normal",
+    "text": "Add these packages to pubspec.yaml dependencies before running any build:"
+  },
+  {
+    "style": "Heading 2",
+    "text": "6D.  Final Verification Checklist"
+  },
+  {
+    "style": "Normal",
+    "text": "Before considering the build complete, confirm every item below. Paste this checklist into Antigravity and ask it to self-verify each item:"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Every screen background = stiraBg (#07060F) + one accent radial gradient overlay"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Every card uses StiraGlassCard with BackdropFilter blur 16 — no flat Card() widgets"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Every metric number uses StiraLedMetric — DM Mono font + glow shadow"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Every uppercase tag uses DM Mono + letterSpacing 2 + toUpperCase()"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Every heading uses Syne font — not system font, not Inter, not Roboto"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Dashboard has 3 visually distinct buttons: pink primary / ghost / destructive text"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Bottom nav active tab shows stiraPink color + icon glow drop shadow"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Onboarding options animate selection state with AnimatedContainer 200ms"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Check-in uses rotary dial gesture — not buttons or Slider widget"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Forecast card has NO lock icon or any paywall indicator"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Danger Zones shows pulsing animated ring on each pin — not a static dot"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  All Profile menu items have subtitle text and look visually identical to each other"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Keyboard never covers any form button (resizeToAvoidBottomInset: true everywhere)"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  StiraOrb color changes based on intensity value (teal / amber / pink)"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  All 8 copy strings from Section 6A have been updated"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  All 9 bugs from Section 6B have been resolved"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Tools tab is a dedicated screen reachable from bottom nav — not buried in Home"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  No screen uses default Flutter blue, white, or grey as primary background"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Screen entry animations stagger with 80ms delay between each element"
+  },
+  {
+    "style": "Normal",
+    "text": "☐  Reset / Relapse button always shows confirmation dialog before executing"
+  },
+  {
+    "style": "Normal",
+    "text": "Stira — Master Prompt v1.0  ·  End of Document"
+  },
+  {
+    "style": "Normal",
+    "text": "Paste each section into Antigravity one at a time. Confirm the build compiles before moving to the next section."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 1 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "19\nTotal Features | 4\nBuild Phases | 6\n★ Signature Features"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 2 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "# | Section | Purpose"
+  },
+  {
+    "style": "TableRow",
+    "text": "0 | Read the Codebase First | Forces the AI to understand all existing code before touching anything"
+  },
+  {
+    "style": "TableRow",
+    "text": "1 | Design System Tokens | Colors, fonts, spacing — applied globally so nothing is hardcoded"
+  },
+  {
+    "style": "TableRow",
+    "text": "2 | Reusable Components | 8 shared widgets every screen must use — built once, used everywhere"
+  },
+  {
+    "style": "TableRow",
+    "text": "3 | Screen-by-Screen Build | All 9 screens with exact layouts, widgets, states, and interactions"
+  },
+  {
+    "style": "TableRow",
+    "text": "4 | Navigation & Routing | How screens connect, transition, and preserve state"
+  },
+  {
+    "style": "TableRow",
+    "text": "5 | Animations & Micro-interactions | Every motion — entry, pulse, submission, milestones"
+  },
+  {
+    "style": "TableRow",
+    "text": "6 | Copy, Bug Fixes & Verification | All text rewrites, 9 bug fixes, and a final checklist"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 3 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "⚠  DO NOT write a single line of code until you have completed every step in this section. This is not optional."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 4 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "PROMPT TO PASTE — STEP 0\nBefore making any changes to this project, do the following in this exact order:\n1.  Read every .dart file in the /lib directory, including all subdirectories.\n2.  Identify the widget tree for each screen and list every screen name.\n3.  Find the ThemeData / theme file and list every current color and font in use.\n4.  Identify the navigation system: GoRouter / Navigator 1.0 / Navigator 2.0.\n5.  Identify the state management approach: Provider / Riverpod / Bloc / setState.\n6.  List every external package already in pubspec.yaml.\n7.  Confirm which features from this list are already implemented (even partially):\n    Streak counter / Check-in screen / Danger Zones / The Vault / Breathing tools / Forecast card / Relapse log / Profile / Insights\n8.  Do NOT delete any existing logic, data models, or backend connections.\n9.  Do NOT rename any existing class names, function names, or variable names.\n10. Reply with: the full screen list, current nav system, state management type, and list of already-implemented features. Do not start building until I confirm."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 5 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "ℹ  Wait for Antigravity to reply with the screen list. Read its response and confirm it has understood the codebase correctly before continuing to Section 1."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 6 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "PASTE THIS INTO ANTIGRAVITY\nCreate a new file: lib/theme/stira_tokens.dart\nAdd these exact values. Apply them globally via ThemeData. Do not hardcode anything inline.\n\nCOLORS:\nACCENT RULE — which color to use where:\nTYPOGRAPHY — add to pubspec.yaml, then apply via google_fonts package:\nTEXT STYLES:\nLED GLOW SHADOW — apply to every DM Mono metric number:\nSPACING + SHAPE:\nSCREEN BACKGROUNDS — one radial gradient per screen over stiraBg base:"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 7 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "PASTE THIS INTO ANTIGRAVITY\nCreate the following 8 shared widgets in lib/widgets/. Use the exact class names listed below. Every screen will import from this folder.\n1.  StiraGlassCard\nFile: lib/widgets/stira_glass_card.dart\nA glassmorphic card. Props: accentColor (Color), child (Widget), padding (EdgeInsets, default 14px all), fullWidth (bool, default false).\n›  Use ClipRRect with borderRadius 18px\n›  Wrap with BackdropFilter(filter: ImageFilter.blur(sigmaX:16, sigmaY:16))\n›  Container gradient: accentColor.withOpacity(0.18) → accentColor.withOpacity(0.04)\n›  Border: accentColor.withOpacity(0.22), width 1px, radius 18px\n›  Add a subtle glow orb in top-right corner: 80px circle, accentColor at 8% opacity\n2.  StiraLedMetric\nFile: lib/widgets/stira_led_metric.dart\nLED-style glowing number. Props: value (String), unit (String), color (Color), size (double, default 28).\n›  Font: DM Mono, weight 500, size = size param\n›  Unit in same font at size * 0.4, color stiraMuted\n›  Shadow: Shadow(color: color.withOpacity(0.55), blurRadius: 14)\n3.  StiraCardLabel\nFile: lib/widgets/stira_card_label.dart\nUppercase tag above every metric. Props: text (String), color (Color, default stiraMuted).\n›  DM Mono 400, size 8.5, letterSpacing 1.5, toUpperCase()\n4.  StiraPrimaryButton\nFile: lib/widgets/stira_primary_button.dart\nMain CTA button. Props: label (String), onTap (VoidCallback), color (Color, default stiraPink), isLoading (bool).\n›  Height 48px, borderRadius 14px, full width\n›  Gradient: LinearGradient(color → color darkened 20%)\n›  BoxShadow: color.withOpacity(0.35), offset (0,8), blurRadius 24\n›  Label: Syne 700, size 14, white\n›  InkWell with scale animation 1.0→0.97 on press (50ms)\n5.  StiraGhostButton\nFile: lib/widgets/stira_ghost_button.dart\nSecondary action button. Props: label (String), onTap (VoidCallback).\n›  Height 48px, borderRadius 14px\n›  Border: stiraGlassBorder, background: stiraGlass\n›  Label: Syne 600, size 13, stiraMuted\n6.  StiraDestructiveText\nFile: lib/widgets/stira_destructive_text.dart\nFor Reset ONLY. Props: label (String), onTap (VoidCallback, only fires after confirmation).\n›  TextButton with no background, no border\n›  Label: DM Sans 500, size 13, stiraPink.withOpacity(0.7)\n›  Always shows AlertDialog(\"Reset your streak?\", \"This cannot be undone.\") before calling onTap\n7.  StiraBottomNav\nFile: lib/widgets/stira_bottom_nav.dart\n4-tab persistent nav bar. Props: currentIndex (int), onTap (Function(int)).\n›  Height 60px, horizontal padding 24px\n›  Background: stiraBg.withOpacity(0.85) + BackdropFilter blur 20\n›  Top border: stiraGlassBorder, width 1px\n›  Tabs: Home(⌂) · Insights(◈) · Tools(✦) · Profile(◯)\n›  Active: stiraPink color + drop shadow glow stiraPink, blurRadius 8\n›  Inactive: stiraMuted color\n›  Label: DM Mono, size 7px, letterSpacing 0.5\n8.  StiraOrb\nFile: lib/widgets/stira_orb.dart\nThe animated central state orb. Props: intensity (double, 0.0–1.0), size (double, default 110).\n›  Color by intensity: 0.0–0.33 = stiraTeal, 0.34–0.66 = stiraAmber, 0.67–1.0 = stiraPink\n›  Orb: RadialGradient from orbColor.withOpacity(0.95) at 38% 32%\n›  BoxShadow: orbColor.withOpacity(0.4) blurRadius 50, orbColor.withOpacity(0.15) blurRadius 100\n›  Outer ring: AnimationController 3s ease-in-out repeat, scale 1.0→1.08, opacity 0.6→0.2\n›  Ring border: 1px orbColor.withOpacity(0.25), margin 16px outside orb"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 8 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "ID | Screen | Tab | What it does"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-01 | 💥  Splash Screen | Launch | Orb pulse animation → auto-advances to Onboarding or Dashboard"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-02 | 📝  Onboarding (5 steps) | Launch | Personalization questions, progress bar, animated option selection"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-03 | 🔐  Account Creation | Launch | Email/password + Google/Apple sign-in, keyboard bug fixed"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-04 | 🏠  Dashboard | Home (Tab 1) | Orb + 3 glassmorphic cards + 3 distinct action buttons"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-05 | 📋  Check-in | Home (Tab 1) | Radial dial intensity + trigger chips + location + mood"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-06 | 📊  Insights | Insights (Tab 2) | Streak hero card + 7-day bar chart + trigger tags + heatmap"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-07 | 🧰  Tools | Tools (Tab 3) | Intervention cards: breathing, vault, habits, mirror, bond"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-08 | 📍  Danger Zones | Profile (Tab 4) | Mini map + pulsing zone pins + trigger counts + add zone"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-09 | 👤  Profile | Profile (Tab 4) | Avatar + stat row + menu items with descriptions + toggles"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 9 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "⚠  Each screen prompt below must be pasted SEPARATELY. Confirm the screen compiles before pasting the next one."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 10 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-01 | Splash Screen\nAnimated orb on a dark background. \"stira\" fades in. Auto-advances to Onboarding or Dashboard after 2.5 seconds.\n›  Background: stiraBg + RadialGradient stiraPink 15% opacity, top-center\n›  StiraOrb(intensity: 0.5, size: 100) centered on screen\n›  \"stira\" text: Syne 800, 32px, ShaderMask gradient stiraWhite → stiraPink\n›  \"BEHAVIORAL INTELLIGENCE\" text: DM Mono 400, 10px, letterSpacing 2.5, stiraMuted\n›  Entire screen wraps in FadeTransition (opacity 0→1, 800ms, Curves.easeIn)\n›  Timer(Duration(seconds: 2.5)) → push Onboarding (first launch) or Dashboard (returning)\n›  Use SharedPreferences bool \"onboarding_complete\" to decide which route"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 11 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-02 | Onboarding (5 Screens)\nOne question per screen. Progress bar at top. Animated option selection. \"Continue\" button disabled until selection made.\n›  Screen 1: \"When is the urge strongest?\" — Morning / Afternoon / Evening / Late night\n›  Screen 2: \"What usually triggers it?\" — Boredom / Stress / Loneliness / Habit / No reason\n›  Screen 3: \"What is your goal?\" — Full stop / Reduce significantly / Understand patterns / Just track\n›  Screen 4: \"How accountable do you want to be?\" — Daily check-ins / Weekly only / Reminders / No pressure\n›  Screen 5: \"What should we call you?\" — TextField (single line, stiraGlass bg, DM Sans font)\n›  Progress bar: 5 Containers in a Row. Done = stiraPink 24px wide. Active = stiraWhite 32px. Todo = stiraGlassBorder 16px\n›  Option: unselected = stiraGlass bg + stiraGlassBorder border. Selected = stiraPink.withOpacity(0.1) bg + stiraPink.withOpacity(0.5) border\n›  Left circle: unselected = transparent. Selected = stiraPink fill + glow shadow. Use AnimatedContainer 200ms\n›  StiraPrimaryButton disabled (opacity 0.4) if no option selected"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 12 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-03 | Account Creation\nEmail + password sign-up. Keyboard must never cover the button. Social login buttons below a divider.\n›  CRITICAL FIX: Scaffold(resizeToAvoidBottomInset: true). Wrap body in SingleChildScrollView\n›  Bottom padding: SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 20)\n›  Email field: stiraGlass Container, borderRadius 14px, focus border stiraPink.withOpacity(0.5)\n›  Password field: same styling, obscureText toggle, show/hide eye icon\n›  Confirm password field: same styling\n›  \"Your data stays on your device.\" — tappable text opens an explanatory bottom sheet\n›  Below primary button: Row with hairline dividers + \"or\" text in stiraMuted\n›  Google sign-in: stiraGlass container, borderRadius 14px, Google icon + \"Continue with Google\"\n›  Apple sign-in: same styling with Apple icon"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 13 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-04 | Dashboard (Home Tab)\nThe app's home screen. Shows orb, 3 glassmorphic metric cards, forecast strip, and 3 distinct action buttons. Uses StiraOrb, StiraGlassCard, StiraLedMetric, StiraBottomNav.\n›  Background: stiraBg + RadialGradient stiraAmber 12% opacity at (50%, 20%)\n›  Top bar: greeting (Syne 700, 18px) + date/streak-day (DM Mono, 9px, stiraMuted) + avatar circle gradient\n›  StiraOrb centered: intensity from latest check-in value / 10. If no check-in today: 0.5\n›  Status row below orb: 6px colored dot + text (DM Mono 9px, orbColor, letterSpacing 2, uppercase)\n›  Card grid (2 columns, gap 10px):\n›    Pink card: StiraCardLabel(\"CURRENT STREAK\") + StiraLedMetric(streak, \"d\", stiraPink) + \"Best: Xd\" sub\n›    Teal card: StiraCardLabel(\"STABILITY SCORE\") + StiraLedMetric(score, \"%\", stiraTeal) + delta arrow sub\n›    Full-width amber card: StiraCardLabel(\"FORECAST\") + risk label + LinearProgressIndicator + detail text\n›    Forecast card has NO lock icon. Remove it entirely.\n›  Actions row: StiraPrimaryButton(\"Check-in\") flex:1 + StiraGhostButton(\"Pause\") + StiraDestructiveText(\"Reset\")\n›  StiraBottomNav(currentIndex: 0)"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 14 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-05 | Check-in Screen\nRadial dial for urge intensity. Trigger and location chip selectors. Submits and returns to dashboard with animation.\n›  Background: stiraBg + RadialGradient stiraTeal 15% opacity at center\n›  Header: back button circle (stiraGlass, 28px) + \"Daily Check-in\" Syne 700 16px\n›  Dial: outer ring 140px, dashed border stiraTeal.withOpacity(0.3), AnimationController 20s linear repeat rotate\n›  Inner disc 90px: RadialGradient stiraTeal, glow BoxShadow stiraTeal 30 blur, counter-rotates\n›  Inside disc: StiraLedMetric(intensity.round(), \"/10\", stiraTeal, size:22)\n›  GestureDetector on dial: onPanUpdate calculates angle → maps to 1-10, HapticFeedback.selectionClick() per integer\n›  Question card 1 (StiraGlassCard, stiraTeal): \"What triggered the urge?\" — multi-select chips\n›    Chips: Boredom, Stress, Loneliness, Habit, Fatigue, No reason\n›  Question card 2 (StiraGlassCard, stiraTeal): \"Where are you?\" — single-select chips\n›    Chips: Home, Bedroom, Work, Outside, Car, Other\n›  Submit button (StiraPrimaryButton color:stiraTeal): saves data, shows ripple animation, pops to Dashboard"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 15 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-06 | Insights Screen\nWeekly behavioral overview. Streak hero card, bar chart, trigger breakdown, time-of-day heatmap.\n›  Background: stiraBg + RadialGradient stiraViolet 12% opacity at top-right\n›  Header: \"Your Insights\" Syne 800 20px + date range DM Mono 9px stiraMuted\n›  Streak hero (StiraGlassCard, stiraAmber): StiraLedMetric(streak,\"\",stiraAmber,36) + name + personal best + 🔥\n›  7-day chart (StiraGlassCard, stiraViolet):\n›    StiraCardLabel(\"URGE INTENSITY · 7 DAYS\")\n›    Row of 7 bars: height = (dayIntensity/10) * 60px, gradient stiraViolet→stiraViolet.withOpacity(0.3)\n›    Today's bar: stiraTeal gradient instead of violet\n›    Day initial label below each bar: DM Mono 7px stiraMuted\n›  Trigger breakdown (StiraGlassCard, stiraPink):\n›    StiraCardLabel(\"TOP TRIGGERS\")\n›    Wrap chips: trigger + \"XX%\" label, colored by rank (Pink / Amber / Violet / Teal)\n›  Stability heatmap (StiraGlassCard, stiraTeal): 24 mini bars for hours 0–23\n›  StiraBottomNav(currentIndex: 1)"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 16 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-07 | Tools Tab\nDedicated tab for all intervention tools. Cards surfaced automatically when intensity is high.\n›  Background: stiraBg + RadialGradient stiraViolet 10% opacity at center\n›  Header: \"Intervention Tools\" Syne 800 20px + \"Use these when the urge arrives.\" body\n›  RESET PROTOCOL card (StiraGlassCard, stiraTeal, full width):\n›    Row: title/desc Column + StiraPrimaryButton(\"Start\", color:stiraTeal, width:72)\n›    On Start: push full-screen BreathingSessionScreen with animated circle + phases + countdown\n›  4-4-4 BREATHING card (StiraGlassCard, stiraViolet):\n›    Copy: \"The simplest regulation tool. Breathe with us.\" (NOT \"No app needed\")\n›  VAULT MESSAGE card (StiraGlassCard, stiraAmber):\n›    Shows preview of most recent vault letter. If none: \"Write your first message →\" prompt\n›  REPLACEMENT HABITS card (StiraGlassCard, stiraViolet):\n›    List of 3 top recommended habits based on detected need from latest check-in\n›  BOND MODE card (StiraGlassCard, stiraViolet):\n›    If no bond: \"Connect with one trusted person\" setup prompt\n›    If bonded: partner status chip + \"Send encouragement\" button\n›  StiraBottomNav(currentIndex: 2)"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 17 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-08 | Danger Zones Screen\nMap preview with pulsing animated pins. Zone list with trigger counts and risk level indicators. Add zone button.\n›  Background: stiraBg + RadialGradient stiraPink 12% opacity at top-center\n›  Header: back button + \"High-Risk Locations\" Syne 700 16px\n›  Map preview (height 140px, borderRadius 16px, stiraGlass bg):\n›    Subtle grid pattern overlay (white 15% opacity, 20px spacing)\n›    For each zone: Stack with outer pulsing ring (AnimationController 2s, scale 1.0→1.08, opacity 0.6→0.2)\n›    Ring: stiraPink.withOpacity(0.15) bg, stiraPink.withOpacity(0.5) border, 50px diameter\n›    Pin icon centered, size 16\n›  Zone count label below map: DM Mono 9px stiraMuted\n›  Empty state: dashed-border Container (stiraPink.withOpacity(0.3)), \"No zones tracked yet\" centered\n›  Zone list items (stiraGlassCard, stiraPink, padding 12px 14px):\n›    Left: 32px icon container (stiraPink.withOpacity(0.15)) + zone emoji\n›    Center: zone name (DM Sans 600 12px) + trigger count (DM Mono 9px stiraMuted)\n›    Right: 8px status dot — Pink glow if >5 triggers, Amber if 2–5, Teal if 0–1\n›  Add Zone button: dashed border stiraPink.withOpacity(0.35), pink bg 5%, pink text"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 18 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "S-09 | Profile Screen\nUser avatar with stats. Menu items all styled identically with subtitles. Toggles for reminders and biometric lock.\n›  Background: gradient stiraBg2 (top) → stiraBg (bottom). No radial overlay.\n›  Avatar circle 64px: gradient stiraPink→stiraViolet, border 2px white 15%, glow shadow stiraPink 30 blur\n›  User name: Syne 700, 16px, stiraWhite. \"Member since X\": DM Mono 9px stiraMuted\n›  Stats row: 3 equal StiraGlassCards side-by-side, gap 8px:\n›    Card 1 (stiraPink): StiraLedMetric(streak) + StiraCardLabel(\"DAY STREAK\")\n›    Card 2 (stiraTeal): StiraLedMetric(stability%) + StiraCardLabel(\"STABILITY\")\n›    Card 3 (stiraAmber): StiraLedMetric(checkIns) + StiraCardLabel(\"CHECK-INS\")\n›  Menu items — ALL items must use the SAME style. No purple highlight on any item:\n›    🔔 Daily Reminders / \"8 AM · 10 PM\"  →  CupertinoSwitch (stiraPink activeColor)\n›    🔐 Biometric App Lock / \"FaceID enabled\"  →  CupertinoSwitch\n›    🗝️ The Vault / \"Letters to your future self\"  →  chevron → Vault screen\n›    🧬 Identity Builder / \"Define who you are becoming\"  →  chevron\n›    📍 Danger Zones / \"X zones tracked\"  →  chevron → Danger Zones screen\n›    📊 Weekly Report / \"Your full behavioral review\"  →  chevron (SAME style as others)\n›    🌑 Shadow Mode / \"Change app appearance\"  →  chevron\n›    🚪 Sign Out  →  TextButton, stiraPink.withOpacity(0.6)\n›  StiraBottomNav(currentIndex: 3)"
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 19 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "PASTE THIS INTO ANTIGRAVITY\nSet up navigation with these exact rules:\nBOTTOM NAV TABS:\nAll 4 tab screens must use AutomaticKeepAliveClientMixin to preserve scroll and state when switching tabs.\nPUSH ROUTES (open on top of tab stack):\nPAGE TRANSITIONS — apply to all push routes:\nBACK NAVIGATION: all push routes use the standard back button (no custom gesture needed). Returning to a tab always restores its previous scroll position."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 20 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "PASTE THIS INTO ANTIGRAVITY\nAdd these 6 animation behaviors to the app. Apply globally — do not do them one-off per screen.\n1.  SCREEN ENTRY STAGGER\nEvery card and content block on every screen animates in on mount. Use AnimationController + Interval-based stagger. Each element: opacity 0→1 + translateY +20px→0, duration 300ms, Curves.easeOutCubic. Delay each element by 80ms more than the previous.\n2.  ORB PULSE (continuous)\nStiraOrb uses a repeating AnimationController (3s, ease-in-out). Orb scale: 1.0→1.06. BoxShadow blur: normal→+30. Outer ring: scale 1.0→1.08, opacity 0.6→0.2, 0.5s delay offset.\n3.  DIAL ROTATION (check-in screen)\nOuter ring: AnimationController 20s linear repeat. Transform.rotate(anim.value * 2 * pi). Inner disc: same controller, reversed direction.\n4.  CHECK-IN SUBMISSION CELEBRATION\nOn submit button tap: a teal ripple expands from screen center (Container, 0→300px, opacity 1→0, 600ms). \"Check-in saved.\" text fades in for 500ms. After 800ms total: pop back to Dashboard. Dashboard orb color AnimatedContainer 500ms transition to new intensity color.\n5.  STREAK MILESTONE CELEBRATION\nAt Day 3, 7, 14, 30, 60, 90, 180, 365: show a full-screen overlay. Background: stiraAmber radial glow. Large centered text: \"[N] days.\" Syne 800, 52px. Dismiss on tap. Only show once per milestone (use SharedPreferences to track).\n6.  BUTTON PRESS SCALE\nEvery StiraPrimaryButton and StiraGhostButton: GestureDetector onTapDown → Transform.scale(0.97), duration 50ms. onTapUp / onTapCancel → scale back to 1.0, duration 80ms."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 21 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "❌ Old text (remove this) | ✅ New text (replace with this)"
+  },
+  {
+    "style": "TableRow",
+    "text": "\"Base behaviors remain stable.\" | \"You're in a stable window right now.\""
+  },
+  {
+    "style": "TableRow",
+    "text": "\"No vulnerable window identified at this time.\" | \"Stira sees no high-risk window ahead. Stay consistent.\""
+  },
+  {
+    "style": "TableRow",
+    "text": "\"No app needed. Just breathe slowly and count.\" | \"The simplest regulation tool. Breathe with us — it works.\""
+  },
+  {
+    "style": "TableRow",
+    "text": "\"Write something to yourself for when it's hard.\" | \"Write to yourself from a place of strength. You'll read it when you need it most.\""
+  },
+  {
+    "style": "TableRow",
+    "text": "\"Stira respects your privacy.\" (empty state only) | \"No zones tracked yet. Stira respects your privacy.\""
+  },
+  {
+    "style": "TableRow",
+    "text": "The Vault menu item — no subtitle | Add subtitle: \"Letters to your future self\""
+  },
+  {
+    "style": "TableRow",
+    "text": "\"Weekly Stability Report\" — purple/pink highlight in Profile | Remove highlight. Use same style as all other menu items."
+  },
+  {
+    "style": "TableRow",
+    "text": "Lock icon on Forecast card | Remove entirely. Replace with amber \"FORECAST\" chip label."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 22 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "# | Bug | Screen | Fix"
+  },
+  {
+    "style": "TableRow",
+    "text": "01 | Keyboard covers Sign Up button | Sign Up | Scaffold(resizeToAvoidBottomInset: true) + SingleChildScrollView + SizedBox(height: viewInsets.bottom + 20)"
+  },
+  {
+    "style": "TableRow",
+    "text": "02 | Check-in / Pause / Reset look identical | Dashboard | StiraPrimaryButton for Check-in. StiraGhostButton for Pause. StiraDestructiveText for Reset."
+  },
+  {
+    "style": "TableRow",
+    "text": "03 | Cards are flat rectangles — no glass effect | All screens | Replace all Card widgets with StiraGlassCard. Add BackdropFilter blur 16 to every card."
+  },
+  {
+    "style": "TableRow",
+    "text": "04 | Metric numbers have no glow or mono font | Dashboard, Insights | Replace all metric TextWidgets with StiraLedMetric (DM Mono + glow shadow)."
+  },
+  {
+    "style": "TableRow",
+    "text": "05 | Onboarding options have no selection feedback | Onboarding | AnimatedContainer 200ms on each option: border + bg change on tap. Dot fills on select."
+  },
+  {
+    "style": "TableRow",
+    "text": "06 | Forecast card shows a lock icon | Dashboard | Delete the Icon widget for the lock. Forecast is a core feature — no paywall signal."
+  },
+  {
+    "style": "TableRow",
+    "text": "07 | Bottom nav has no active-tab glow | All screens | Active tab icon: add drop shadow glow stiraPink blurRadius 8. Label color: stiraPink."
+  },
+  {
+    "style": "TableRow",
+    "text": "08 | Danger Zones empty state is bare text | Danger Zones | Replace with dashed-border Container (stiraPink.withOpacity(0.3)) + explanatory sub-copy."
+  },
+  {
+    "style": "TableRow",
+    "text": "09 | Profile menu items have no subtitles | Profile | Add subtitle Text widget below each menu item name. See Section 3 S-09 for exact subtitles."
+  },
+  {
+    "style": "TABLE",
+    "text": "--- Table 23 ---"
+  },
+  {
+    "style": "TableRow",
+    "text": "dependencies:\n  google_fonts: ^6.1.0              # Syne, DM Mono, DM Sans\n  flutter_animate: ^4.3.0           # Staggered entry animations\n  fl_chart: ^0.68.0                 # Bar, line, scatter charts (Insights)\n  vibration: ^1.9.0                 # Custom haptic array (SOS Heartbeat)\n  geolocator: ^12.0.0              # Location for Danger Zones\n  background_location: ^0.9.0       # Background zone monitoring\n  flutter_map: ^6.1.0              # OpenStreetMap mini-map preview\n  latlong2: ^0.9.0                 # Map coordinates\n  hive: ^2.2.3                     # Local data storage\n  hive_flutter: ^1.1.0             # Hive Flutter integration\n  flutter_local_notifications: ^17.2.2  # All push notifications\n  flutter_tts: ^4.0.2              # Vault letter read-aloud\n  camera: ^0.10.5                  # Mirror Protocol front camera\n  local_auth: ^2.2.0               # FaceID / Fingerprint lock\n  shared_preferences: ^2.2.3       # Onboarding state, milestone flags\n  timer_builder: ^2.0.0            # Live streak timer (no setState spam)\n  supabase_flutter: ^2.3.4         # Bond Mode real-time channel"
+  }
+]

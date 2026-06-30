@@ -1,0 +1,1378 @@
+﻿--- word/document.xml ---
+stira
+Notification Intelligence Layer
+100% Local  ┬╖  Zero Firebase Cost  ┬╖  Real-time Behaviour Analysis  ┬╖  Complete Antigravity Build Prompt
+0
+Firebase Cost
+7
+Build Steps
+6
+Intelligence Files
+24
+Notification Types
+HOW THIS WORKS
+This document builds a complete on-device notification intelligence system using flutter_local_notifications + timezone. Zero Firebase Cloud Functions. Zero Blaze plan. The system runs a background engine every 15 minutes using workmanager, reads local Hive storage, analyses the user's check-in history, location, streak, and danger zones, then schedules or cancels local notifications in real time. Every notification fires from the device itself ΓÇö no server needed, ever.
+Architecture Overview
+Six files work together as one system. Each has a single responsibility. They communicate through Hive (local storage) ΓÇö no network calls between them.
+File
+Runs
+Job
+stira_notification_service.dart
+On app open + background
+Initialises flutter_local_notifications. Creates Android channels. Requests permission. Shows/cancels individual notifications.
+stira_intelligence_engine.dart
+Every 15 min via workmanager
+The brain. Reads all local data. Decides WHAT to send and WHEN. Calls NotificationService to schedule.
+stira_behaviour_analyser.dart
+Called by engine
+Reads check-in history from Hive. Calculates peak window, urge velocity, trigger patterns, stability trend.
+stira_location_monitor.dart
+Continuous background
+Polls geolocator every 5 min. Detects Danger Zone and Safe Zone entry. Fires SOS haptic + local notification.
+stira_throttle_manager.dart
+Called by engine
+Enforces daily limits, quiet hours, minimum gaps, rest mode. Returns bool: canSend() before every fire.
+stira_notification_copy.dart
+Called by engine
+Returns the right title + body string for each notification type based on data confidence level.
+Step 1 ΓÇö Packages & Permissions
+1
+PASTE INTO ANTIGRAVITY FIRST
+Add all required packages and configure Android + iOS permissions
+Read the current pubspec.yaml. Then make ALL of the following changes exactly as written.
+pubspec.yaml ΓÇö add under dependencies:
+dependencies:
+  flutter_local_notifications: ^18.0.0
+  timezone: ^0.9.4
+  workmanager: ^0.5.2
+  geolocator: ^13.0.0
+  background_location: ^0.9.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  vibration: ^2.0.0
+  permission_handler: ^11.3.0
+# These may already exist ΓÇö only add if missing
+android/app/src/main/AndroidManifest.xml ΓÇö add INSIDE <manifest> before <application>:
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+<uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+<uses-permission android:name="android.permission.VIBRATE"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+android/app/src/main/AndroidManifest.xml ΓÇö add INSIDE <application>:
+<!-- flutter_local_notifications: exact alarm receiver -->
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"/>
+<receiver android:exported="false"
+    android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+  <intent-filter>
+    <action android:name="android.intent.action.BOOT_COMPLETED"/>
+    <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+  </intent-filter>
+</receiver>
+<!-- workmanager background task receiver -->
+<receiver
+    android:name="be.tramckrijte.workmanager.BackgroundTaskWorker"
+    android:exported="false"/>
+<service
+    android:name="be.tramckrijte.workmanager.BackgroundTaskWorker"
+    android:permission="android.permission.BIND_JOB_SERVICE"
+    android:exported="false"/>
+<!-- High importance notification channel for FCM (keeps FCM working too) -->
+<meta-data
+    android:name="com.google.firebase.messaging.default_notification_channel_id"
+    android:value="stira_critical"/>
+android/app/build.gradle ΓÇö confirm minSdkVersion is 21 or higher:
+android {
+    defaultConfig {
+        minSdkVersion 21   // must be 21+ for workmanager
+        targetSdkVersion 34
+    }
+}
+ios/Runner/Info.plist ΓÇö add inside the root <dict>:
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>Stira monitors your location to detect Danger Zones and protect you.</string>
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>Stira uses your location to detect Danger Zones.</string>
+<key>BGTaskSchedulerPermittedIdentifiers</key>
+<array>
+  <string>com.stira.intelligenceEngine</string>
+</array>
+<key>UIBackgroundModes</key>
+<array>
+  <string>fetch</string>
+  <string>location</string>
+  <string>processing</string>
+</array>
+VERIFY
+After adding all packages run: flutter pub get. If any package version conflicts, use the latest compatible version from pub.dev. Then confirm flutter pub get exits with no errors before proceeding to Step 2.
+Step 2 ΓÇö StiraNotificationService
+2
+PASTE INTO ANTIGRAVITY
+Create the core notification service ΓÇö handles all scheduling and cancellation
+Create this file exactly. Do not modify anything else yet.
+// FILE: lib/services/stira_notification_service.dart
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:vibration/vibration.dart';
+import 'package:permission_handler/permission_handler.dart';
+class StiraNotificationService {
+  static final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
+  static bool _initialized = false;
+  // ΓöÇΓöÇ Channel IDs ΓöÇΓöÇ
+  static const String CHANNEL_CRITICAL  = 'stira_critical';
+  static const String CHANNEL_HIGH      = 'stira_high';
+  static const String CHANNEL_NORMAL    = 'stira_normal';
+  static const String CHANNEL_SILENT    = 'stira_silent';
+  // ΓöÇΓöÇ Notification IDs (unique per type) ΓöÇΓöÇ
+  static const int ID_CHECKIN_REMINDER   = 1001;
+  static const int ID_VULNERABILITY      = 1002;
+  static const int ID_DANGER_ZONE        = 1003;
+  static const int ID_SAFE_ZONE          = 1004;
+  static const int ID_STREAK_MILESTONE   = 1005;
+  static const int ID_PRE_MILESTONE      = 1006;
+  static const int ID_RELAPSE_SUPPORT    = 1007;
+  static const int ID_URGE_VELOCITY      = 1008;
+  static const int ID_DOPAMINE_JOURNAL   = 1009;
+  static const int ID_IDENTITY_PUSH      = 1010;
+  static const int ID_DISENGAGEMENT_48H  = 1011;
+  static const int ID_DISENGAGEMENT_72H  = 1012;
+  static const int ID_SAME_TIME_TOMORROW = 1013;
+  static const int ID_SCREEN_TIME_WARN   = 1014;
+  static const int ID_WEEKLY_REPORT      = 1015;
+  static const int ID_PERSONAL_BEST      = 1016;
+  static const int ID_STABILITY_UP       = 1017;
+  static const int ID_STABILITY_DOWN     = 1018;
+  static const int ID_BOND_PARTNER       = 1019;
+  static const int ID_REWIRE_PATHWAY     = 1020;
+  static const int ID_LOCATION_PATTERN   = 1021;
+  static const int ID_MORNING_ANCHOR     = 1022;
+  static const int ID_POST_CHECKIN       = 1023;  // "check in again" reminder
+  static const int ID_PEAK_APPROACH      = 1024;
+  static Future<void> initialize() async {
+    if (_initialized) return;
+    tz.initializeTimeZones();
+    // Android init
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings("@mipmap/ic_launcher");
+    // iOS init
+    const DarwinInitializationSettings iosSettings =
+        DarwinInitializationSettings(
+      requestAlertPermission: false,   // we request manually below
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    const InitializationSettings settings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: _onNotificationTapped,
+      onDidReceiveBackgroundNotificationResponse: _onBackgroundNotificationTapped,
+    );
+    await _createChannels();
+    _initialized = true;
+  }
+  static Future<void> requestPermission() async {
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+    // iOS specific
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin>()
+        ?.requestPermissions(alert: true, badge: true, sound: true);
+  }
+  static Future<void> _createChannels() async {
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin == null) return;
+    // CRITICAL: Danger zones, crisis ΓÇö max importance, always vibrate
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'stira_critical',
+        'Stira Critical Alerts',
+        description: 'Danger zones and crisis moments',
+        importance: Importance.max,
+        enableVibration: true,
+        playSound: true,
+        showBadge: true,
+      ),
+    );
+    // HIGH: Milestones, vulnerability warnings, check-in reminders
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'stira_high',
+        'Stira Alerts',
+        description: 'Vulnerability warnings and check-in reminders',
+        importance: Importance.high,
+        enableVibration: true,
+        playSound: true,
+        showBadge: true,
+      ),
+    );
+    // NORMAL: Journal reminders, identity, weekly report
+    await androidPlugin.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'stira_normal',
+        'Stira Reminders',
+        description: 'Journal reminders and daily check-ins',
+        importance: Importance.defaultImportance,
+        enableVibration: false,
+        playSound: true,
+        showBadge: false,
+      ),
+    );
+  }
+  // ΓöÇΓöÇ SCHEDULE a notification at a specific future time ΓöÇΓöÇ
+  static Future<void> scheduleAt({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledTime,
+    String channel = CHANNEL_HIGH,
+    String? payload,
+  }) async {
+    if (!_initialized) await initialize();
+    final tz.TZDateTime tzTime = tz.TZDateTime.from(
+      scheduledTime,
+      tz.local,
+    );
+    // Cancel existing notification with same ID first
+    await _plugin.cancel(id);
+    await _plugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tzTime,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel,
+          _channelName(channel),
+          importance: _channelImportance(channel),
+          priority: Priority.high,
+          enableVibration: channel != CHANNEL_NORMAL,
+          styleInformation: BigTextStyleInformation(body),
+          icon: "@mipmap/ic_launcher",
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: payload,
+    );
+  }
+  // ΓöÇΓöÇ SHOW immediately (for Danger Zone, crisis) ΓöÇΓöÇ
+  static Future<void> showNow({
+    required int id,
+    required String title,
+    required String body,
+    String channel = CHANNEL_CRITICAL,
+    String? payload,
+  }) async {
+    if (!_initialized) await initialize();
+    await _plugin.cancel(id);
+    await _plugin.show(
+      id,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          channel,
+          _channelName(channel),
+          importance: Importance.max,
+          priority: Priority.max,
+          enableVibration: true,
+          styleInformation: BigTextStyleInformation(body),
+        ),
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true, presentBadge: true, presentSound: true,
+        ),
+      ),
+      payload: payload,
+    );
+  }
+  // ΓöÇΓöÇ SOS HEARTBEAT ΓÇö haptic only, no visual notification ΓöÇΓöÇ
+  static Future<void> fireSOSHeartbeat() async {
+    if (await Vibration.hasVibrator() ?? false) {
+      // Pattern: 3 short ΓåÆ pause ΓåÆ 1 long ΓåÆ pause ΓåÆ 3 short
+      await Vibration.vibrate(
+        pattern: [0, 100, 100, 100, 100, 100, 200, 600, 200, 100, 100, 100, 100, 100],
+        intensities: [0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255, 0, 255],
+      );
+    }
+  }
+  // ΓöÇΓöÇ CANCEL a specific notification ΓöÇΓöÇ
+  static Future<void> cancel(int id) async => _plugin.cancel(id);
+  // ΓöÇΓöÇ CANCEL ALL scheduled notifications ΓöÇΓöÇ
+  static Future<void> cancelAll() async => _plugin.cancelAll();
+  // ΓöÇΓöÇ TAP HANDLER ΓÇö deep link routing ΓöÇΓöÇ
+  static void _onNotificationTapped(NotificationResponse response) {
+    final payload = response.payload ?? "";
+    // Route based on payload ΓÇö handled by NavigationService
+    StiraNavigationService.handleNotificationTap(payload);
+  }
+  @pragma("vm:entry-point")
+  static void _onBackgroundNotificationTapped(NotificationResponse response) {
+    // Store payload in Hive so app reads it on next open
+    final box = Hive.box("notification_taps");
+    box.put("pending_tap", response.payload);
+  }
+  static String _channelName(String id) {
+    if (id == CHANNEL_CRITICAL) return 'Stira Critical Alerts';
+    if (id == CHANNEL_HIGH) return 'Stira Alerts';
+    if (id == CHANNEL_NORMAL) return 'Stira Reminders';
+    return 'Stira';
+  }
+  static Importance _channelImportance(String id) {
+    if (id == CHANNEL_CRITICAL) return Importance.max;
+    if (id == CHANNEL_HIGH) return Importance.high;
+    return Importance.defaultImportance;
+  }
+}
+Step 3 ΓÇö StiraBehaviourAnalyser
+3
+PASTE INTO ANTIGRAVITY
+Create the behaviour analyser ΓÇö reads Hive data and outputs all intelligence signals
+This file reads from local Hive boxes only. No Firestore reads. No network calls. Everything is on-device.
+// FILE: lib/services/stira_behaviour_analyser.dart
+import 'package:hive/hive.dart';
+// Output model ΓÇö all signals in one object
+class BehaviourSnapshot {
+  final int currentStreak;
+  final int hoursSinceLastCheckIn;
+  final double avgUrgeIntensityLast7Days;
+  final double urgeVelocity;          // positive = rising, negative = falling
+  final int peakHour;                 // 0-23: hour with most high-intensity check-ins
+  final int peakHourConfidence;       // 0-100: how confident the peak hour prediction is
+  final String topTrigger;            // "Boredom", "Stress", etc.
+  final bool checkedInToday;
+  final bool dopamineJournalToday;
+  final bool isInRestMode;
+  final int sentToday;
+  final DateTime? lastSentAt;
+  final double stabilityTrend;        // positive = improving, negative = declining
+  final int totalCleanDays;
+  final String userName;
+  final String coreNeed;
+  final int daysSinceInstall;
+  final bool sameTimeTomorrowDue;
+  final String sameTimeTomorrowCommitment;
+  final DateTime? lastRelapseAt;
+  const BehaviourSnapshot({
+    required this.currentStreak,
+    required this.hoursSinceLastCheckIn,
+    required this.avgUrgeIntensityLast7Days,
+    required this.urgeVelocity,
+    required this.peakHour,
+    required this.peakHourConfidence,
+    required this.topTrigger,
+    required this.checkedInToday,
+    required this.dopamineJournalToday,
+    required this.isInRestMode,
+    required this.sentToday,
+    required this.lastSentAt,
+    required this.stabilityTrend,
+    required this.totalCleanDays,
+    required this.userName,
+    required this.coreNeed,
+    required this.daysSinceInstall,
+    required this.sameTimeTomorrowDue,
+    required this.sameTimeTomorrowCommitment,
+    required this.lastRelapseAt,
+  });
+}
+class StiraBehaviourAnalyser {
+  static BehaviourSnapshot analyse() {
+    final checkIns    = Hive.box('check_ins');
+    final userData    = Hive.box('user_data');
+    final notifState  = Hive.box('notification_state');
+    final journal     = Hive.box('dopamine_journal');
+    final commitments = Hive.box('commitments');
+    // ΓöÇΓöÇ Basic user data ΓöÇΓöÇ
+    final String userName   = userData.get('name', defaultValue: 'there');
+    final String coreNeed   = userData.get('core_need', defaultValue: 'Calm');
+    final int currentStreak = userData.get('current_streak', defaultValue: 0);
+    final int totalCleanDays= userData.get('total_clean_days', defaultValue: 0);
+    final DateTime installDate = DateTime.parse(userData.get('install_date',
+        defaultValue: DateTime.now().toIso8601String()));
+    final int daysSinceInstall = DateTime.now().difference(installDate).inDays;
+    // ΓöÇΓöÇ Last relapse ΓöÇΓöÇ
+    final String? lastRelapseStr = userData.get('last_relapse_at');
+    final DateTime? lastRelapseAt = lastRelapseStr != null
+        ? DateTime.tryParse(lastRelapseStr) : null;
+    // ΓöÇΓöÇ Check-in history (last 30 days) ΓöÇΓöÇ
+    final now = DateTime.now();
+    final allCheckIns = checkIns.values
+        .cast<Map>().toList()
+        .where((c) {
+          final ts = DateTime.tryParse(c['timestamp'] ?? '');
+          return ts != null && now.difference(ts).inDays <= 30;
+        })
+        .toList()
+        ..sort((a, b) {
+          final ta = DateTime.parse(a['timestamp']);
+          final tb = DateTime.parse(b['timestamp']);
+          return tb.compareTo(ta); // newest first
+        });
+    // ΓöÇΓöÇ Hours since last check-in ΓöÇΓöÇ
+    int hoursSinceLastCheckIn = 999;
+    if (allCheckIns.isNotEmpty) {
+      final last = DateTime.parse(allCheckIns.first['timestamp']);
+      hoursSinceLastCheckIn = now.difference(last).inHours;
+    }
+    // ΓöÇΓöÇ Checked in today ΓöÇΓöÇ
+    final bool checkedInToday = allCheckIns.any((c) {
+      final ts = DateTime.parse(c['timestamp']);
+      return ts.day == now.day && ts.month == now.month && ts.year == now.year;
+    });
+    // ΓöÇΓöÇ Average urge intensity last 7 days ΓöÇΓöÇ
+    final last7 = allCheckIns.where((c) {
+      final ts = DateTime.parse(c['timestamp']);
+      return now.difference(ts).inDays <= 7;
+    }).toList();
+    final double avgUrge = last7.isEmpty ? 0 :
+        last7.map((c) => (c['urge_level'] as num).toDouble())
+        .reduce((a, b) => a + b) / last7.length;
+    // ΓöÇΓöÇ Urge velocity: compare last 3 check-ins ΓöÇΓöÇ
+    double urgeVelocity = 0;
+    if (allCheckIns.length >= 3) {
+      final levels = allCheckIns.take(3).map((c) => (c['urge_level'] as num).toDouble()).toList();
+      urgeVelocity = levels[0] - levels[2]; // newest minus oldest of 3
+    }
+    // ΓöÇΓöÇ Peak hour: find the hour with most high-intensity (>=6) check-ins ΓöÇΓöÇ
+    final Map<int, int> hourCounts = {};
+    for (final c in allCheckIns) {
+      if ((c['urge_level'] as num) >= 6) {
+        final hour = DateTime.parse(c['timestamp']).hour;
+        hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
+      }
+    }
+    int peakHour = 21; // default: 9 PM
+    int peakCount = 0;
+    hourCounts.forEach((h, count) {
+      if (count > peakCount) { peakCount = count; peakHour = h; }
+    });
+    // Confidence: how many data points support this peak
+    final int peakHourConfidence = (peakCount / (last7.length + 1) * 100).clamp(0, 100).toInt();
+    // ΓöÇΓöÇ Top trigger ΓöÇΓöÇ
+    final Map<String, int> triggerCounts = {};
+    for (final c in allCheckIns) {
+      final triggers = List<String>.from(c['triggers'] ?? []);
+      for (final t in triggers) {
+        triggerCounts[t] = (triggerCounts[t] ?? 0) + 1;
+      }
+    }
+    String topTrigger = 'Stress';
+    int topCount = 0;
+    triggerCounts.forEach((t, count) {
+      if (count > topCount) { topCount = count; topTrigger = t; }
+    });
+    // ΓöÇΓöÇ Stability trend: compare avg intensity week1 vs week2 ΓöÇΓöÇ
+    final week1 = allCheckIns.where((c) {
+      final d = now.difference(DateTime.parse(c['timestamp'])).inDays;
+      return d <= 7;
+    }).toList();
+    final week2 = allCheckIns.where((c) {
+      final d = now.difference(DateTime.parse(c['timestamp'])).inDays;
+      return d > 7 && d <= 14;
+    }).toList();
+    double stabilityTrend = 0;
+    if (week1.isNotEmpty && week2.isNotEmpty) {
+      final avg1 = week1.map((c) => (c['urge_level'] as num).toDouble()).reduce((a,b)=>a+b)/week1.length;
+      final avg2 = week2.map((c) => (c['urge_level'] as num).toDouble()).reduce((a,b)=>a+b)/week2.length;
+      stabilityTrend = avg2 - avg1; // positive = getting worse, negative = improving
+    }
+    // ΓöÇΓöÇ Dopamine journal today ΓöÇΓöÇ
+    final bool dopamineJournalToday = journal.values.any((j) {
+      final ts = DateTime.tryParse(j['date'] ?? '');
+      return ts != null && ts.day == now.day && ts.month == now.month;
+    });
+    // ΓöÇΓöÇ Notification state ΓöÇΓöÇ
+    final int sentToday = notifState.get('sent_today', defaultValue: 0);
+    final bool isInRestMode = notifState.get('rest_mode', defaultValue: false);
+    final String? lastSentStr = notifState.get('last_sent_at');
+    final DateTime? lastSentAt = lastSentStr != null ? DateTime.tryParse(lastSentStr) : null;
+    // ΓöÇΓöÇ Same Time Tomorrow commitment ΓöÇΓöÇ
+    bool sameTimeTomorrowDue = false;
+    String sameTimeTomorrowCommitment = '';
+    if (commitments.isNotEmpty) {
+      final recent = commitments.values.last as Map?;
+      if (recent != null) {
+        final savedAt = DateTime.tryParse(recent['saved_at'] ?? '');
+        if (savedAt != null) {
+          final hoursDiff = now.difference(savedAt).inHours;
+          if (hoursDiff >= 23 && hoursDiff <= 25 && recent['outcome'] == null) {
+            sameTimeTomorrowDue = true;
+            sameTimeTomorrowCommitment = recent['commitment'] ?? '';
+          }
+        }
+      }
+    }
+    return BehaviourSnapshot(
+      currentStreak: currentStreak,
+      hoursSinceLastCheckIn: hoursSinceLastCheckIn,
+      avgUrgeIntensityLast7Days: avgUrge,
+      urgeVelocity: urgeVelocity,
+      peakHour: peakHour,
+      peakHourConfidence: peakHourConfidence,
+      topTrigger: topTrigger,
+      checkedInToday: checkedInToday,
+      dopamineJournalToday: dopamineJournalToday,
+      isInRestMode: isInRestMode,
+      sentToday: sentToday,
+      lastSentAt: lastSentAt,
+      stabilityTrend: stabilityTrend,
+      totalCleanDays: totalCleanDays,
+      userName: userName,
+      coreNeed: coreNeed,
+      daysSinceInstall: daysSinceInstall,
+      sameTimeTomorrowDue: sameTimeTomorrowDue,
+      sameTimeTomorrowCommitment: sameTimeTomorrowCommitment,
+      lastRelapseAt: lastRelapseAt,
+    );
+  }
+  // ΓöÇΓöÇ REAL-TIME: call this whenever the user does something in the app ΓöÇΓöÇ
+  // Pass the snapshot to IntelligenceEngine.reactToUserAction()
+  static void syncToHive({
+    required int currentStreak,
+    required int urgeLevel,
+    required List<String> triggers,
+    required String location,
+  }) {
+    final checkIns = Hive.box('check_ins');
+    checkIns.add({
+      'timestamp': DateTime.now().toIso8601String(),
+      'urge_level': urgeLevel,
+      'triggers': triggers,
+      'location': location,
+    });
+    final userData = Hive.box('user_data');
+    userData.put('current_streak', currentStreak);
+    userData.put('last_checkin_at', DateTime.now().toIso8601String());
+  }
+}
+Step 4 ΓÇö StiraThrottleManager + StiraNotificationCopy
+4
+PASTE INTO ANTIGRAVITY
+Create the throttle manager and all notification copy ΓÇö one file each
+Create both files. The throttle manager enforces all daily limits. The copy file returns the right message text based on how much data the system has.
+// FILE: lib/services/stira_throttle_manager.dart
+import 'package:hive/hive.dart';
+class StiraThrottleManager {
+  static const int NORMAL_DAILY_LIMIT  = 2;
+  static const int CRISIS_DAILY_LIMIT  = 4;
+  static const int REST_MODE_LIMIT      = 1;
+  static const int MIN_GAP_HOURS        = 3;
+  static const int QUIET_START_HOUR     = 22; // 10 PM
+  static const int QUIET_END_HOUR       = 8;  // 8 AM
+  // Returns true if a notification CAN be sent right now
+  static bool canSend({bool isCrisis = false}) {
+    final box = Hive.box('notification_state');
+    final int sentToday = box.get('sent_today', defaultValue: 0);
+    final bool restMode = box.get('rest_mode', defaultValue: false);
+    final String? lastSentStr = box.get('last_sent_at');
+    final bool crisisActive = box.get('crisis_active', defaultValue: false);
+    // Reset sent_today at midnight
+    final String? lastResetStr = box.get('last_reset_date');
+    final today = DateTime.now().toLocal();
+    final todayStr = "${today.year}-${today.month}-${today.day}";
+    if (lastResetStr != todayStr) {
+      box.put('sent_today', 0);
+      box.put('last_reset_date', todayStr);
+      // Also reset untapped counter each day
+    }
+    // Check quiet hours
+    final hour = today.hour;
+    if (hour >= QUIET_START_HOUR || hour < QUIET_END_HOUR) {
+      if (!isCrisis) return false; // crisis overrides quiet hours
+    }
+    // Check rest mode
+    if (restMode && sentToday >= REST_MODE_LIMIT) return false;
+    // Check daily limit
+    final limit = restMode ? REST_MODE_LIMIT
+        : (crisisActive ? CRISIS_DAILY_LIMIT : NORMAL_DAILY_LIMIT);
+    if (sentToday >= limit) return false;
+    // Check minimum gap (3 hours between notifications)
+    if (lastSentStr != null) {
+      final lastSent = DateTime.tryParse(lastSentStr);
+      if (lastSent != null) {
+        final gap = DateTime.now().difference(lastSent).inHours;
+        if (gap < MIN_GAP_HOURS && !isCrisis) return false;
+      }
+    }
+    return true;
+  }
+  // Call this after every notification is sent
+  static void recordSent() {
+    final box = Hive.box('notification_state');
+    final int sentToday = box.get('sent_today', defaultValue: 0);
+    box.put('sent_today', sentToday + 1);
+    box.put('last_sent_at', DateTime.now().toIso8601String());
+  }
+  // Call this when a notification is tapped
+  static void recordTap() {
+    final box = Hive.box('notification_state');
+    box.put('consecutive_untapped', 0);
+    // Exit rest mode if user is engaging again
+    if (box.get('rest_mode', defaultValue: false)) {
+      box.put('rest_mode', false);
+    }
+  }
+  // Call this when a notification is NOT tapped (check at next cycle)
+  static void recordUntapped() {
+    final box = Hive.box('notification_state');
+    final int untapped = box.get('consecutive_untapped', defaultValue: 0) + 1;
+    box.put('consecutive_untapped', untapped);
+    // After 5 consecutive untapped ΓåÆ rest mode for 7 days
+    if (untapped >= 5) {
+      box.put('rest_mode', true);
+      box.put('rest_mode_until',
+          DateTime.now().add(const Duration(days: 7)).toIso8601String());
+    }
+  }
+  static void setCrisisMode(bool active) {
+    Hive.box('notification_state').put('crisis_active', active);
+  }
+  // Check if rest mode period has expired
+  static void checkRestModeExpiry() {
+    final box = Hive.box('notification_state');
+    final untilStr = box.get('rest_mode_until');
+    if (untilStr != null) {
+      final until = DateTime.tryParse(untilStr);
+      if (until != null && DateTime.now().isAfter(until)) {
+        box.put('rest_mode', false);
+        box.put('consecutive_untapped', 0);
+      }
+    }
+  }
+}
+// FILE: lib/services/stira_notification_copy.dart
+import 'stira_behaviour_analyser.dart';
+class NotificationContent {
+  final String title;
+  final String body;
+  final String payload; // deep link route
+  const NotificationContent(this.title, this.body, this.payload);
+}
+class StiraNotificationCopy {
+  // ΓöÇΓöÇ CHECK-IN REMINDER ΓöÇΓöÇ
+  static NotificationContent checkInReminder(BehaviourSnapshot s) {
+    if (s.daysSinceInstall < 7 || s.peakHourConfidence < 40) {
+      return NotificationContent('How are you doing?',
+          'Quick 30-second check-in. Just your number right now.', '/checkin');
+    }
+    if (s.peakHourConfidence >= 70) {
+      return NotificationContent('Your window is coming.',
+          'Based on your pattern, this hour tends to be difficult. One check-in ΓÇö just drag the dial.', '/checkin');
+    }
+    return NotificationContent('How are you right now, ${s.userName}?',
+        'Your ${s.topTrigger.toLowerCase()} pattern is strongest around this time. Quick check-in.', '/checkin');
+  }
+  // ΓöÇΓöÇ POST CHECK-IN FOLLOW-UP ("check in again" after engagement) ΓöÇΓöÇ
+  static NotificationContent postCheckInFollowUp(BehaviourSnapshot s, int hoursAfter) {
+    if (hoursAfter <= 4) {
+      return NotificationContent('Still with you.',
+          'You checked in ${hoursAfter}h ago. Things can shift fast. How are you now?', '/checkin');
+    }
+    return NotificationContent('Check in again?',
+        'It\'s been a few hours since your last check-in. Your stability score updates with each one.', '/checkin');
+  }
+  // ΓöÇΓöÇ VULNERABILITY WARNING (predictive) ΓöÇΓöÇ
+  static NotificationContent vulnerabilityWarning(BehaviourSnapshot s) {
+    final hour = s.peakHour;
+    final timeStr = hour == 0 ? 'midnight' : hour < 12 ? '${hour} AM' : hour == 12 ? 'noon' : '${hour - 12} PM';
+    if (s.peakHourConfidence >= 80 && s.daysSinceInstall >= 30) {
+      return NotificationContent('Your window opens in 30 minutes.',
+          '${_dayName()} at $timeStr. ${s.topTrigger} hit you here last week. What\'s your plan?', '/home');
+    }
+    if (s.peakHourConfidence >= 60) {
+      return NotificationContent('Your peak window is coming.',
+          'Around $timeStr tends to be your hardest hour. Stay ahead of it.', '/home');
+    }",
+    return NotificationContent('Stay sharp.',
+        'Your vulnerable window is approaching. One check-in before it peaks.', '/checkin');
+  }
+  // ΓöÇΓöÇ URGE VELOCITY (rising check-ins) ΓöÇΓöÇ
+  static NotificationContent urgeVelocity(BehaviourSnapshot s) {
+    return NotificationContent('Something is building.',
+        'Your last ${s.checkedInToday ? "check-ins show" : "few hours show"} things escalating. This is the time to use a tool ΓÇö before it peaks.', '/tools');
+  }
+  // ΓöÇΓöÇ DISENGAGEMENT ΓÇö 48 hours ΓöÇΓöÇ
+  static NotificationContent disengagement48h(BehaviourSnapshot s) {
+    return NotificationContent('We haven\'t heard from you, ${s.userName}.',
+        'That\'s okay. One tap ΓÇö just your number today. Nothing else needed.', '/checkin');
+  }
+  // ΓöÇΓöÇ DISENGAGEMENT ΓÇö 72 hours ΓöÇΓöÇ
+  static NotificationContent disengagement72h(BehaviourSnapshot s) {
+    return NotificationContent('You went quiet. No judgment.',
+        'However the last few days went ΓÇö Stira doesn\'t reset your worth. Check in whenever you\'re ready.', '/home');
+  }
+  // ΓöÇΓöÇ DANGER ZONE ΓöÇΓöÇ
+  static NotificationContent dangerZone(String zoneName) {
+    return NotificationContent('You\'re near somewhere difficult.',
+        'Your pattern shows $zoneName is hard. You don\'t have to go in. Your tools are one tap away.', '/tools');
+  }
+  // ΓöÇΓöÇ SAFE ZONE ΓöÇΓöÇ
+  static NotificationContent safeZone(String zoneName) {
+    return NotificationContent('You\'re in a strong place.',
+        '$zoneName is where you do well. Stay as long as you can.', '/home');
+  }
+  // ΓöÇΓöÇ STREAK MILESTONE ΓöÇΓöÇ
+  static NotificationContent streakMilestone(int days, String userName) {
+    final Map<int, List<String>> copy = {
+      3:   ['Three days.', 'Most people stop before this point. You didn\'t. Three days is real.'],
+      7:   ['One week. Your first new pathway.', 'Seven days. Your brain is already changing. Open your Rewire Map.'],
+      14:  ['Two weeks. Streak Insurance unlocked.', 'Fourteen days of choosing differently. Your protection is now active.'],
+      30:  ['Thirty days. This is rare.', 'One month. Fewer than 5% of people reach this. You are one of them.'],
+      60:  ['Sixty days. The pattern is shifting.', 'Two months. The old pathways are fading. New ones are your default now.'],
+      90:  ['90 days. You rewired it.', 'Three months. This is when new habits become structural. You did this.'],
+      180: ['180 days. Half a year.', 'Six months. Your Rewire Map is complete. The old patterns are nearly gone.'],
+      365: ['One year. You built something real.', '365 days of choosing yourself. This is identity now, not willpower.'],
+    };
+    final entry = copy[days];
+    if (entry != null) return NotificationContent(entry[0], entry[1], '/home');
+    return NotificationContent('Day $days.', 'Keep going, $userName. Every day counts.', '/home');
+  }
+  // ΓöÇΓöÇ PRE-MILESTONE (1 day before) ΓöÇΓöÇ
+  static NotificationContent preMilestone(int tomorrowMilestone) {
+    return NotificationContent('Tomorrow is Day $tomorrowMilestone.',
+        'One more day and you hit a milestone. You\'ve already done the hard part.', '/home');
+  }
+  // ΓöÇΓöÇ PERSONAL BEST APPROACH ΓöÇΓöÇ
+  static NotificationContent personalBestApproach(int personalBest, int current) {
+    return NotificationContent('One day from your record.',
+        'Your best ever was $personalBest days. Tomorrow you tie it. The day after, you break it.', '/home');
+  }
+  // ΓöÇΓöÇ POST RELAPSE SUPPORT ΓöÇΓöÇ
+  static NotificationContent postRelapse(BehaviourSnapshot s) {
+    return NotificationContent('Day 1 again. That\'s okay.',
+        'Your total clean days are ${s.totalCleanDays}. A slip doesn\'t erase what you built. What do you need right now?', '/home');
+  }
+  // ΓöÇΓöÇ DOPAMINE JOURNAL ΓöÇΓöÇ
+  static NotificationContent dopamineJournal() {
+    return NotificationContent('What gave you real dopamine today?',
+        'One sentence. It doesn\'t have to be big. A meal, a conversation, a quiet hour.', '/journal');
+  }
+  // ΓöÇΓöÇ IDENTITY PUSH ΓöÇΓöÇ
+  static NotificationContent identityPush(int dayIndex) {
+    const completions = [
+      'keeps my word to myself.',
+      'chooses long-term over short-term.',
+      'is stronger than my habits.',
+      'builds, not destroys.',
+      'is already changing.',
+      'does not need this.',
+      'has proven they can stop.',
+      'values their future self.',
+      'chooses differently today.',
+      'is becoming someone new.',
+    ];
+    final completion = completions[dayIndex % completions.length];
+    return NotificationContent('I am someone who...',
+        '...$completion', '/identity');
+  }
+  // ΓöÇΓöÇ SAME TIME TOMORROW ΓöÇΓöÇ
+  static NotificationContent sameTimeTomorrow(String commitment, String userName) {
+    return NotificationContent('$userName, you said: "${commitment.length > 40 ? commitment.substring(0, 40) + '...' : commitment}"',
+        "It's that time. You planned for this moment. How did it go?", '/checkin?source=commitment');
+  }
+  // ΓöÇΓöÇ WEEKLY REPORT ΓöÇΓöÇ
+  static NotificationContent weeklyReport() {
+    return NotificationContent('Your week in review is ready.',
+        'Your stability trend, top trigger, and one focus for the week ahead.', '/insights/weekly');
+  }
+  // ΓöÇΓöÇ MORNING ANCHOR ΓöÇΓöÇ
+  static NotificationContent morningAnchor(BehaviourSnapshot s) {
+    return NotificationContent('Good morning, ${s.userName}.',
+        'Day ${s.currentStreak + 1} starts now. Your ${s.topTrigger.toLowerCase()} window is at ${_formatHour(s.peakHour)}. Plan for it.', '/home');
+  }
+  static String _dayName() {
+    const days = [
+      'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
+    ];
+    return days[DateTime.now().weekday % 7];
+  }
+  static String _formatHour(int hour) {
+    if (hour == 0) return 'midnight';
+    if (hour == 12) return 'noon';
+    if (hour < 12) return '${hour} AM';
+    return '${hour - 12} PM';
+  }
+}
+Step 5 ΓÇö StiraIntelligenceEngine
+5
+PASTE INTO ANTIGRAVITY ΓÇö THE BRAIN
+The main decision engine ΓÇö runs every 15 minutes via workmanager, reacts in real-time to user actions
+This is the core of the system. It runs on a 15-minute background cycle AND is called directly from inside the app whenever the user does something significant (checks in, logs a relapse, saves a commitment). That is what makes it real-time.
+// FILE: lib/services/stira_intelligence_engine.dart
+import 'package:workmanager/workmanager.dart';
+import 'package:hive/hive.dart';
+import 'stira_notification_service.dart';
+import 'stira_behaviour_analyser.dart';
+import 'stira_throttle_manager.dart';
+import 'stira_notification_copy.dart';
+const String TASK_INTELLIGENCE_CYCLE = 'stira_intelligence_cycle';
+// ΓöÇΓöÇ BACKGROUND ENTRY POINT (must be top-level function) ΓöÇΓöÇ
+@pragma("vm:entry-point")
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    if (task == TASK_INTELLIGENCE_CYCLE) {
+      await Hive.initFlutter();
+      await Hive.openBox('check_ins');
+      await Hive.openBox('user_data');
+      await Hive.openBox('notification_state');
+      await Hive.openBox('dopamine_journal');
+      await Hive.openBox('commitments');
+      await Hive.openBox('danger_zones');
+      await Hive.openBox('notification_taps');
+      await StiraNotificationService.initialize();
+      await StiraIntelligenceEngine.runCycle();
+    }
+    return Future.value(true);
+  });
+}
+class StiraIntelligenceEngine {
+  // ΓöÇΓöÇ CALL FROM main.dart ONCE ON STARTUP ΓöÇΓöÇ
+  static Future<void> startBackgroundCycle() async {
+    await Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: false,
+    );
+    await Workmanager().registerPeriodicTask(
+      'stira_intelligence_task',
+      TASK_INTELLIGENCE_CYCLE,
+      frequency: const Duration(minutes: 15),
+      constraints: Constraints(
+        networkType: NetworkType.not_required,
+        requiresBatteryNotLow: false,
+        requiresCharging: false,
+        requiresDeviceIdle: false,
+        requiresStorageNotLow: false,
+      ),
+      existingWorkPolicy: ExistingWorkPolicy.keep,
+    );
+  }
+  // ΓöÇΓöÇ MAIN CYCLE ΓÇö called every 15 minutes ΓöÇΓöÇ
+  static Future<void> runCycle() async {
+    StiraThrottleManager.checkRestModeExpiry();
+    final s = StiraBehaviourAnalyser.analyse();
+    final now = DateTime.now();
+    // ΓöÇΓöÇ STEP 1: CRISIS SCAN ΓÇö highest priority, ignores throttle ΓöÇΓöÇ
+    if (_shouldFireUrgeVelocity(s)) {
+      await _send(
+        id: StiraNotificationService.ID_URGE_VELOCITY,
+        content: StiraNotificationCopy.urgeVelocity(s),
+        channel: StiraNotificationService.CHANNEL_CRITICAL,
+        isCrisis: true,
+      );
+      return; // One notification per cycle. Stop here.
+    }
+    // ΓöÇΓöÇ STEP 2: SAME TIME TOMORROW ΓÇö highest engagement rate ΓöÇΓöÇ
+    if (s.sameTimeTomorrowDue) {
+      if (StiraThrottleManager.canSend()) {
+        await _send(
+          id: StiraNotificationService.ID_SAME_TIME_TOMORROW,
+          content: StiraNotificationCopy.sameTimeTomorrow(
+              s.sameTimeTomorrowCommitment, s.userName),
+          channel: StiraNotificationService.CHANNEL_HIGH,
+        );
+        return;
+      }
+    }
+    // ΓöÇΓöÇ STEP 3: MILESTONE SCAN ΓÇö never throttled ΓöÇΓöÇ
+    final milestoneDays = [3, 7, 14, 30, 60, 90, 180, 365];
+    if (milestoneDays.contains(s.currentStreak)) {
+      final lastMilestoneDay = Hive.box('notification_state').get('last_milestone_day', defaultValue: -1);
+      if (lastMilestoneDay != s.currentStreak) {
+        Hive.box('notification_state').put('last_milestone_day', s.currentStreak);
+        await _send(
+          id: StiraNotificationService.ID_STREAK_MILESTONE,
+          content: StiraNotificationCopy.streakMilestone(s.currentStreak, s.userName),
+          channel: StiraNotificationService.CHANNEL_HIGH,
+          isCrisis: true, // never throttled
+        );
+        return;
+      }
+    }
+    // ΓöÇΓöÇ STEP 4: PRE-MILESTONE (tomorrow) ΓöÇΓöÇ
+    final tomorrow = s.currentStreak + 1;
+    if (milestoneDays.contains(tomorrow) && now.hour == 20) {
+      if (StiraThrottleManager.canSend()) {
+        await _send(
+          id: StiraNotificationService.ID_PRE_MILESTONE,
+          content: StiraNotificationCopy.preMilestone(tomorrow),
+          channel: StiraNotificationService.CHANNEL_HIGH,
+        );
+        return;
+      }
+    }
+    // ΓöÇΓöÇ STEP 5: PREDICTIVE VULNERABILITY WARNING ΓöÇΓöÇ
+    if (_isApproachingPeakWindow(s, now) && StiraThrottleManager.canSend()) {
+      await _send(
+        id: StiraNotificationService.ID_VULNERABILITY,
+        content: StiraNotificationCopy.vulnerabilityWarning(s),
+        channel: StiraNotificationService.CHANNEL_HIGH,
+      );
+      return;
+    }
+    // ΓöÇΓöÇ STEP 6: CHECK-IN REMINDER ΓöÇΓöÇ
+    if (_shouldFireCheckInReminder(s, now) && StiraThrottleManager.canSend()) {
+      await _send(
+        id: StiraNotificationService.ID_CHECKIN_REMINDER,
+        content: StiraNotificationCopy.checkInReminder(s),
+        channel: StiraNotificationService.CHANNEL_HIGH,
+      );
+      return;
+    }
+    // ΓöÇΓöÇ STEP 7: DISENGAGEMENT ΓöÇΓöÇ
+    if (s.hoursSinceLastCheckIn >= 72 && StiraThrottleManager.canSend()) {
+      await _send(
+        id: StiraNotificationService.ID_DISENGAGEMENT_72H,
+        content: StiraNotificationCopy.disengagement72h(s),
+        channel: StiraNotificationService.CHANNEL_NORMAL,
+      );
+      return;
+    }
+    if (s.hoursSinceLastCheckIn >= 48 && StiraThrottleManager.canSend()) {
+      await _send(
+        id: StiraNotificationService.ID_DISENGAGEMENT_48H,
+        content: StiraNotificationCopy.disengagement48h(s),
+        channel: StiraNotificationService.CHANNEL_NORMAL,
+      );
+      return;
+    }
+    // ΓöÇΓöÇ STEP 8: DOPAMINE JOURNAL REMINDER (9 PM if no entry today) ΓöÇΓöÇ
+    if (now.hour == 21 && !s.dopamineJournalToday && StiraThrottleManager.canSend()) {
+      await _send(
+        id: StiraNotificationService.ID_DOPAMINE_JOURNAL,
+        content: StiraNotificationCopy.dopamineJournal(),
+        channel: StiraNotificationService.CHANNEL_NORMAL,
+      );
+      return;
+    }
+    // ΓöÇΓöÇ STEP 9: IDENTITY PUSH ΓÇö only if nothing else fired today ΓöÇΓöÇ
+    if (s.sentToday == 0 && now.hour == s.peakHour && StiraThrottleManager.canSend()) {
+      await _send(
+        id: StiraNotificationService.ID_IDENTITY_PUSH,
+        content: StiraNotificationCopy.identityPush(s.daysSinceInstall),
+        channel: StiraNotificationService.CHANNEL_NORMAL,
+      );
+      return;
+    }
+    // ΓöÇΓöÇ STEP 10: WEEKLY REPORT ΓÇö Sunday 8 AM ΓöÇΓöÇ
+    if (now.weekday == DateTime.sunday && now.hour == 8 && StiraThrottleManager.canSend()) {
+      await _send(
+        id: StiraNotificationService.ID_WEEKLY_REPORT,
+        content: StiraNotificationCopy.weeklyReport(),
+        channel: StiraNotificationService.CHANNEL_NORMAL,
+      );
+      return;
+    }
+  }
+  // ΓöÇΓöÇ REAL-TIME REACTION ΓÇö call immediately from UI after user actions ΓöÇΓöÇ
+  static Future<void> reactToUserAction(UserAction action) async {
+    await StiraNotificationService.initialize();
+    final s = StiraBehaviourAnalyser.analyse();
+    switch (action) {
+      case UserAction.checkInSubmitted:
+        // Cancel pending check-in reminder ΓÇö they already checked in
+        await StiraNotificationService.cancel(StiraNotificationService.ID_CHECKIN_REMINDER);
+        await StiraNotificationService.cancel(StiraNotificationService.ID_DISENGAGEMENT_48H);
+        await StiraNotificationService.cancel(StiraNotificationService.ID_DISENGAGEMENT_72H);
+        // If intensity >= 8: crisis mode + SOS heartbeat
+        final lastCheckIn = Hive.box('check_ins').values.last as Map?;
+        final urgeLevel = (lastCheckIn?['urge_level'] as num?)?.toInt() ?? 0;
+        if (urgeLevel >= 8) {
+          StiraThrottleManager.setCrisisMode(true);
+          await StiraNotificationService.fireSOSHeartbeat();
+        } else {
+          StiraThrottleManager.setCrisisMode(false);
+        }
+        // Schedule a follow-up check-in reminder in 4 hours
+        await StiraNotificationService.scheduleAt(
+          id: StiraNotificationService.ID_POST_CHECKIN,
+          title: StiraNotificationCopy.postCheckInFollowUp(s, 4).title,
+          body: StiraNotificationCopy.postCheckInFollowUp(s, 4).body,
+          scheduledTime: DateTime.now().add(const Duration(hours: 4)),
+          channel: StiraNotificationService.CHANNEL_NORMAL,
+          payload: "/checkin",
+        );
+        break;
+      case UserAction.relapseLogged:
+        // Fire post-relapse support immediately ΓÇö no throttle
+        await StiraNotificationService.showNow(
+          id: StiraNotificationService.ID_RELAPSE_SUPPORT,
+          title: StiraNotificationCopy.postRelapse(s).title,
+          body: StiraNotificationCopy.postRelapse(s).body,
+          channel: StiraNotificationService.CHANNEL_CRITICAL,
+          payload: "/home",
+        );
+        StiraThrottleManager.recordSent();
+        break;
+      case UserAction.vaultLetterSaved:
+        // Cancel any pending high-intensity notification ΓÇö vault use counts as tool use
+        await StiraNotificationService.cancel(StiraNotificationService.ID_URGE_VELOCITY);
+        break;
+      case UserAction.commitmentSaved:
+        final commitment = Hive.box('commitments').values.last as Map?;
+        final commitmentText = commitment?['commitment'] as String? ?? '';
+        // Schedule same-time-tomorrow notification for 24h from now
+        await StiraNotificationService.scheduleAt(
+          id: StiraNotificationService.ID_SAME_TIME_TOMORROW,
+          title: StiraNotificationCopy.sameTimeTomorrow(commitmentText, s.userName).title,
+          body: StiraNotificationCopy.sameTimeTomorrow(commitmentText, s.userName).body,
+          scheduledTime: DateTime.now().add(const Duration(hours: 24)),
+          channel: StiraNotificationService.CHANNEL_HIGH,
+          payload: "/checkin?source=commitment",
+        );
+        break;
+      case UserAction.appOpened:
+        // Cancel disengagement notifications ΓÇö user is back
+        await StiraNotificationService.cancel(StiraNotificationService.ID_DISENGAGEMENT_48H);
+        await StiraNotificationService.cancel(StiraNotificationService.ID_DISENGAGEMENT_72H);
+        break;
+    }
+  }
+  // ΓöÇΓöÇ INTERNAL HELPERS ΓöÇΓöÇ
+  static bool _shouldFireUrgeVelocity(BehaviourSnapshot s) {
+    // Velocity > 3 means urge rose by 3+ points across last 3 check-ins
+    return s.urgeVelocity >= 3.0 && s.checkedInToday;
+  }
+  static bool _isApproachingPeakWindow(BehaviourSnapshot s, DateTime now) {
+    final minutesToPeak = (s.peakHour * 60) - (now.hour * 60 + now.minute);
+    // Fire 30-45 minutes before peak, with sufficient confidence
+    return minutesToPeak >= 30 && minutesToPeak <= 45 && s.peakHourConfidence >= 50;
+  }
+  static bool _shouldFireCheckInReminder(BehaviourSnapshot s, DateTime now) {
+    // Fire if: no check-in today AND within 1 hour of peak window AND not already disengaged
+    if (s.checkedInToday) return false;
+    if (s.hoursSinceLastCheckIn >= 48) return false; // disengagement handles this
+    final minutesToPeak = ((s.peakHour - now.hour) * 60).abs();
+    return minutesToPeak <= 60;
+  }
+  static Future<void> _send({
+    required int id,
+    required NotificationContent content,
+    String channel = StiraNotificationService.CHANNEL_HIGH,
+    bool isCrisis = false,
+  }) async {
+    if (!isCrisis && !StiraThrottleManager.canSend(isCrisis: false)) return;
+    await StiraNotificationService.showNow(
+      id: id,
+      title: content.title,
+      body: content.body,
+      channel: channel,
+      payload: content.payload,
+    );
+    StiraThrottleManager.recordSent();
+  }
+}
+// ΓöÇΓöÇ USER ACTION ENUM ΓÇö call reactToUserAction() from the UI ΓöÇΓöÇ
+enum UserAction {
+  checkInSubmitted,
+  relapseLogged,
+  vaultLetterSaved,
+  commitmentSaved,
+  appOpened,
+}
+Step 6 ΓÇö StiraLocationMonitor
+6
+PASTE INTO ANTIGRAVITY
+Continuous background location monitoring for Danger Zones and Safe Zones ΓÇö no Firebase needed
+This service runs independently. It polls location every 5 minutes in background, checks proximity to all pinned zones, fires SOS heartbeat + local notification on Danger Zone entry.
+// FILE: lib/services/stira_location_monitor.dart
+import 'package:geolocator/geolocator.dart';
+import 'package:hive/hive.dart';
+import 'package:workmanager/workmanager.dart';
+import 'stira_notification_service.dart';
+import 'stira_notification_copy.dart';
+class StiraLocationMonitor {
+  static const String TASK_LOCATION = 'stira_location_check';
+  static Future<void> initialize() async {
+    // Check permission
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever) return;
+    // Register periodic location check every 5 minutes
+    await Workmanager().registerPeriodicTask(
+      'stira_location_task',
+      TASK_LOCATION,
+      frequency: const Duration(minutes: 5),
+      constraints: Constraints(
+        networkType: NetworkType.not_required,
+      ),
+      existingWorkPolicy: ExistingWorkPolicy.keep,
+    );
+  }
+  // ΓöÇΓöÇ Called from callbackDispatcher when task == TASK_LOCATION ΓöÇΓöÇ
+  static Future<void> checkLocation() async {
+    Position? position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 10),
+      );
+    } catch (e) {
+      return; // Location not available ΓÇö skip this cycle
+    }
+    final zonesBox = Hive.box('danger_zones');
+    final notifBox = Hive.box('notification_state');
+    final zones = zonesBox.values.cast<Map>().toList();
+    for (final zone in zones) {
+      final double? lat = zone['lat'];
+      final double? lng = zone['lng'];
+      final double radius = (zone['radius_meters'] as num?)?.toDouble() ?? 100;
+      final String zoneName = zone['name'] ?? 'This location';
+      final bool isDanger = zone['is_danger'] ?? true;
+      if (lat == null || lng == null) continue;
+      final double distance = Geolocator.distanceBetween(
+        position.latitude, position.longitude, lat, lng,
+      );
+      if (distance <= radius) {
+        // Inside zone radius
+        final String zoneKey = 'zone_last_fired_${zone['id'] ?? zoneName}';
+        final String? lastFiredStr = notifBox.get(zoneKey);
+        final DateTime? lastFired = lastFiredStr != null ? DateTime.tryParse(lastFiredStr) : null;
+        // Cooldown: 6 hours per zone to prevent spam
+        if (lastFired != null && DateTime.now().difference(lastFired).inHours < 6) continue;
+        if (isDanger) {
+          // 1. Fire SOS Heartbeat first (haptic)
+          await StiraNotificationService.fireSOSHeartbeat();
+          // 2. Wait 2 seconds, then fire push notification
+          await Future.delayed(const Duration(seconds: 2));
+          await StiraNotificationService.showNow(
+            id: StiraNotificationService.ID_DANGER_ZONE,
+            title: StiraNotificationCopy.dangerZone(zoneName).title,
+            body: StiraNotificationCopy.dangerZone(zoneName).body,
+            channel: StiraNotificationService.CHANNEL_CRITICAL,
+            payload: "/tools",
+          );
+          // Record trigger count for this zone
+          final int triggerCount = zone['trigger_count'] ?? 0;
+          zonesBox.putAt(zones.indexOf(zone), {...zone, 'trigger_count': triggerCount + 1});
+        } else {
+          // Safe zone ΓÇö positive reinforcement
+          await StiraNotificationService.showNow(
+            id: StiraNotificationService.ID_SAFE_ZONE,
+            title: StiraNotificationCopy.safeZone(zoneName).title,
+            body: StiraNotificationCopy.safeZone(zoneName).body,
+            channel: StiraNotificationService.CHANNEL_NORMAL,
+            payload: "/home",
+          );
+        }
+        // Record when this zone last fired
+        notifBox.put(zoneKey, DateTime.now().toIso8601String());',
+      }
+    }
+  }
+}
+Step 7 ΓÇö Wire Everything Into main.dart + UI Integration
+7
+PASTE INTO ANTIGRAVITY ΓÇö FINAL WIRING
+Connect all services to main.dart and add reactToUserAction() calls throughout the UI
+This step wires all 6 services together and adds the real-time reaction calls at every point in the UI where the user does something. After this step the entire system is live.
+main.dart ΓÇö add to the top of main() BEFORE runApp():
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'services/stira_notification_service.dart';
+import 'services/stira_intelligence_engine.dart';
+import 'services/stira_location_monitor.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 1. Initialise Hive (local storage)
+  await Hive.initFlutter();
+  await Hive.openBox('check_ins');
+  await Hive.openBox('user_data');
+  await Hive.openBox('notification_state');
+  await Hive.openBox('dopamine_journal');
+  await Hive.openBox('commitments');
+  await Hive.openBox('danger_zones');
+  await Hive.openBox('notification_taps');
+  // 2. Register workmanager callback (MUST be before runApp)
+  Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
+  // 3. Initialise notification channels
+  await StiraNotificationService.initialize();
+  await StiraNotificationService.requestPermission();
+  // 4. Start 15-minute intelligence cycle
+  await StiraIntelligenceEngine.startBackgroundCycle();
+  // 5. Start location monitoring
+  await StiraLocationMonitor.initialize();
+  // 6. React to app open
+  StiraIntelligenceEngine.reactToUserAction(UserAction.appOpened);
+  runApp(const StiraApp());
+}
+// Add this if not already present ΓÇö handles app opened from notification tap
+class StiraApp extends StatefulWidget {
+  const StiraApp({super.key});
+  @override
+  State<StiraApp> createState() => _StiraAppState();
+}
+class _StiraAppState extends State<StiraApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Check for pending notification tap
+      final pendingTap = Hive.box('notification_taps').get('pending_tap');
+      if (pendingTap != null) {
+        StiraNavigationService.handleNotificationTap(pendingTap);
+        Hive.box('notification_taps').delete('pending_tap');
+      }
+      StiraIntelligenceEngine.reactToUserAction(UserAction.appOpened);
+    }
+  }
+}
+CheckInFlow ΓÇö after check-in is saved to Hive, add:
+// After saving check-in to Hive local storage:
+StiraBehaviourAnalyser.syncToHive(
+  currentStreak: widget.currentStreak,
+  urgeLevel: selectedUrgeLevel,
+  triggers: selectedTriggers,
+  location: selectedLocation,
+);
+// Immediately react:
+await StiraIntelligenceEngine.reactToUserAction(UserAction.checkInSubmitted);
+RelapseLogScreen ΓÇö after relapse is saved, add:
+// After saving relapse:
+Hive.box('user_data').put('last_relapse_at', DateTime.now().toIso8601String());
+Hive.box('user_data').put('current_streak', 0);
+// Immediately react ΓÇö fires compassionate support notification:
+await StiraIntelligenceEngine.reactToUserAction(UserAction.relapseLogged);
+SameTimeTomorrowScreen ΓÇö after commitment is saved, add:
+// After saving commitment to Hive:
+Hive.box('commitments').add({
+  'commitment': commitmentText,
+  'saved_at': DateTime.now().toIso8601String(),
+  'outcome': null,
+});
+// Schedule the 24h notification:
+await StiraIntelligenceEngine.reactToUserAction(UserAction.commitmentSaved);
+VaultComposerScreen ΓÇö after letter is saved, add:
+// After saving vault letter:
+await StiraIntelligenceEngine.reactToUserAction(UserAction.vaultLetterSaved);
+callbackDispatcher ΓÇö update the background entry point to handle location task:
+@pragma("vm:entry-point")
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    await Hive.initFlutter();
+    await Hive.openBox('check_ins');
+    await Hive.openBox('user_data');
+    await Hive.openBox('notification_state');
+    await Hive.openBox('dopamine_journal');
+    await Hive.openBox('commitments');
+    await Hive.openBox('danger_zones');
+    await Hive.openBox('notification_taps');
+    await StiraNotificationService.initialize();
+    if (task == TASK_INTELLIGENCE_CYCLE) {
+      await StiraIntelligenceEngine.runCycle();
+    } else if (task == StiraLocationMonitor.TASK_LOCATION) {
+      await StiraLocationMonitor.checkLocation();
+    }
+    return Future.value(true);
+  });
+}
+HIVE SYNC WITH FIRESTORE
+All check-ins, user data, commitments, and zones must be written to BOTH Hive (local) AND Firestore (cloud). Hive is what the notification engine reads on-device. Firestore is what the Insights tab and weekly report reads. If check-ins currently only go to Firestore, add a Hive.box().add() call alongside every Firestore write. The notification engine will not work until Hive has real data in it.
+Verification Checklist
+Test every item on a real Android device. Do not test on simulator for notification delivery.
+ID
+Priority
+Test
+V-01
+MUST
+flutter pub get runs with no dependency conflicts after all packages added
+V-02
+MUST
+flutter build apk --debug passes with zero errors
+V-03
+MUST
+App opens ΓåÆ notification permission dialog appears (only on first launch)
+V-04
+MUST
+Schedule a local notification for 1 minute from now via scheduleAt(). Close app completely. Notification arrives after 1 minute.
+V-05
+MUST
+showNow() fires immediately and appears as heads-up banner (not just in notification shade)
+V-06
+MUST
+SOS Heartbeat fires the correct vibration pattern: 3 short ΓåÆ pause ΓåÆ 1 long ΓåÆ pause ΓåÆ 3 short
+V-07
+HIGH
+Submit a check-in with urge_level = 8 ΓåÆ SOS heartbeat fires AND a post-checkin follow-up is scheduled 4h from now
+V-08
+HIGH
+Submit a check-in ΓåÆ ID_CHECKIN_REMINDER and disengagement notifications are cancelled immediately
+V-09
+HIGH
+Log a relapse ΓåÆ post-relapse notification fires within 10 seconds with correct compassionate copy
+V-10
+HIGH
+Save a Same Time Tomorrow commitment ΓåÆ notification is scheduled for exactly 24h later
+V-11
+HIGH
+Verify 2/day hard limit: send 2 notifications, confirm 3rd is blocked until midnight reset
+V-12
+HIGH
+Verify quiet hours: no notification fires between 10 PM and 8 AM (except crisis)
+V-13
+HIGH
+Verify 3-hour minimum gap between consecutive notifications
+V-14
+MED
+Enter a Danger Zone (simulate by temporarily reducing radius to 5m and standing near zone lat/lng) ΓåÆ SOS heartbeat fires ΓåÆ notification appears within 30 seconds
+V-15
+MED
+Enter a Safe Zone ΓåÆ positive notification appears with zone name
+V-16
+MED
+After 5 check-ins with rising urge levels ΓåÆ urge velocity notification fires with "Something is building" copy
+V-17
+MED
+With 7+ days of check-in data: verify peak hour is correctly identified from Hive data by printing BehaviourAnalyser.analyse().peakHour
+V-18
+MED
+Streak milestone reached (test with streak=7) ΓåÆ milestone notification fires regardless of daily limit
+V-19
+LOW
+9 PM with no dopamine journal entry ΓåÆ journal reminder notification fires
+V-20
+LOW
+Sunday 8 AM ΓåÆ weekly report notification fires
+V-21
+LOW
+App opens from notification tap ΓåÆ correct screen opens based on payload
+V-22
+LOW
+Tapping a notification calls StiraThrottleManager.recordTap() and resets consecutive_untapped counter
+Stira Notification Intelligence Layer  ┬╖  100% Local  ┬╖  Zero Firebase Cost  ┬╖  6 Files  ┬╖  7 Steps  ┬╖  22 Verification Checks
+
+
+--- word/comments.xml ---
+
+
+
+--- word/footer1.xml ---
+Stira ΓÇö Notification Intelligence Layer  ┬╖  100% Local  ┬╖  Zero Firebase Cost  ┬╖  Paste Each Step Into Antigravity
+	
+ / 
+
+

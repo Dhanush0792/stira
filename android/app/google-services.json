@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "338587847382",
+    "project_id": "stira-d2043",
+    "storage_bucket": "stira-d2043.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:338587847382:android:e6a625df2f7964d3239777",
+        "android_client_info": {
+          "package_name": "com.stira.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "338587847382-t753mabjickupbg6n3qj932d62bf569r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.stira.app",
+            "certificate_hash": "e81bc643921b11b40e311eeb70a54dd20fab3813"
+          }
+        },
+        {
+          "client_id": "338587847382-9mffv18uhdsjeio8q56sa9o8c4uu55jn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDP3zORyH5QZFJgNxX5NY9GinONseweoJc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "338587847382-9mffv18uhdsjeio8q56sa9o8c4uu55jn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
