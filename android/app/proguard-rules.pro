@@ -24,3 +24,6 @@
 
 # Prevent stripping of Kotlin background workers
 -keep class * extends androidx.work.ListenableWorker { *; }
+
+# Ignore warnings for missing Play Core classes referenced by Flutter Engine
+-dontwarn com.google.android.play.core.**
