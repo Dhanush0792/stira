@@ -46,14 +46,19 @@ void main() async {
   
   // Initialize services
   Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
-  await StiraNotificationService.initialize();
-  await StiraNotificationService.requestPermission();
-  await StiraIntelligenceEngine.startBackgroundCycle();
+  try {
+    await StiraNotificationService.initialize();
+  } catch (e) {
+    debugPrint('Notification service initialization failed: $e');
+  }
+  
+  unawaited(StiraNotificationService.requestPermission());
+  unawaited(StiraIntelligenceEngine.startBackgroundCycle());
   StiraIntelligenceEngine.reactToAction(UserAction.appOpened);
 
   // Legacy migration check
-  await StorageService.migrateIfNeeded();
-  await WidgetService.initialize();
+  unawaited(StorageService.migrateIfNeeded());
+  unawaited(WidgetService.initialize());
 
   // ── Phase 14: Stabilisation & Guardians ──────────────────────────────────
   StiraBondGuardian().start();
