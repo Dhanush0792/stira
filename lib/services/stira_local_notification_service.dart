@@ -39,8 +39,15 @@ class StiraNotificationService {
 
   static Future<void> initialize() async {
     tz.initializeTimeZones();
-    final timeZoneName = await FlutterTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName.toString()));
+    try {
+      final timeZoneName = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(timeZoneName.toString()));
+    } catch (e) {
+      print('Timezone initialization failed, falling back to UTC: $e');
+      try {
+        tz.setLocalLocation(tz.getLocation('UTC'));
+      } catch (_) {}
+    }
 
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('ic_notification');
