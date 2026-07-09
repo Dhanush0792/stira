@@ -43,6 +43,8 @@ void main() async {
   await Hive.openBox('dopamine_journal');
   await Hive.openBox('commitments');
   await Hive.openBox('notification_taps');
+  await Hive.openBox('stira_prefs');
+  await Hive.openBox('stira_logs');
   
   // Initialize services
   Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
