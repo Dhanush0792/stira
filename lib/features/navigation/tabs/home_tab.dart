@@ -183,28 +183,55 @@ class _HomeTabState extends ConsumerState<HomeTab>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              greetingText,
-                              style: StiraTokens.displayTitle,
-                            ),
-                            Text(
-                              '$dayLabel · Day ${sDays > 0 ? sDays : 1}'.toUpperCase(),
-                              style: StiraTokens.captionMono,
-                            ),
-                          ],
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                greetingText,
+                                style: StiraTokens.displayTitle,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                              Text(
+                                '$dayLabel · Day ${sDays > 0 ? sDays : 1}'.toUpperCase(),
+                                style: StiraTokens.captionMono,
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 12),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.notifications_none, color: Colors.white, size: 22),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (c) => const NotificationsScreen()),
-                                );
-                              },
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.notifications_none, color: Colors.white, size: 22),
+                                  onPressed: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(builder: (c) => const NotificationsScreen()),
+                                    );
+                                    setState(() {}); // Re-check unread badge status upon return
+                                  },
+                                ),
+                                // Show unread notification dot badge if any are unread
+                                if (storage.getNotificationHistory().any((item) => item['is_read'] != true))
+                                  Positioned(
+                                    right: 8,
+                                    top: 8,
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: StiraTokens.stiraPink,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(width: 8),
                             Container(
@@ -371,14 +398,32 @@ class _HomeTabState extends ConsumerState<HomeTab>
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    StiraLedMetric(
-                                      value: '$stabilityScore',
-                                      unit: '%',
-                                      color: StiraTokens.stiraTeal,
-                                    ),
+                                    state.totalCheckins == 0
+                                        ? Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 4),
+                                            child: Text(
+                                              'Check in to\nstart tracking',
+                                              style: GoogleFonts.dmSans(
+                                                fontSize: 11,
+                                                color: StiraTokens.stiraMuted,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          )
+                                        : StiraLedMetric(
+                                            value: '$stabilityScore',
+                                            unit: '%',
+                                            color: StiraTokens.stiraTeal,
+                                          ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      'Up 6pts this week',
+                                      state.totalCheckins == 0
+                                          ? 'No check-ins yet'
+                                          : (state.stabilityDelta > 0
+                                              ? 'Up ${state.stabilityDelta}pts this week'
+                                              : (state.stabilityDelta < 0
+                                                  ? 'Down ${state.stabilityDelta.abs()}pts this week'
+                                                  : 'Stable this week')),
                                       style: GoogleFonts.dmSans(
                                         fontSize: 10,
                                         color: StiraTokens.stiraMuted,

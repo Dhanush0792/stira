@@ -29,23 +29,32 @@ class ToolsTab extends StatefulWidget {
 class _ToolsTabState extends State<ToolsTab>
     with TickerProviderStateMixin, StiraStaggerMixin {
   late AnimationController _breathCtrl;
-  String _breathPhase = 'inhale';
+  String _breathPhase = 'inhale l';
 
   @override
   void initState() {
     super.initState();
     _breathCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 12),
+      duration: const Duration(seconds: 24),
     )..repeat();
 
     _breathCtrl.addListener(() {
       final t = _breathCtrl.value;
-      final newPhase = t < 0.333
-          ? 'inhale'
-          : t < 0.666
-              ? 'hold'
-              : 'exhale';
+      String newPhase = 'inhale l';
+      if (t < (1 / 6)) {
+        newPhase = 'inhale l';
+      } else if (t < (2 / 6)) {
+        newPhase = 'hold';
+      } else if (t < (3 / 6)) {
+        newPhase = 'exhale r';
+      } else if (t < (4 / 6)) {
+        newPhase = 'inhale r';
+      } else if (t < (5 / 6)) {
+        newPhase = 'hold';
+      } else {
+        newPhase = 'exhale l';
+      }
       if (newPhase != _breathPhase && mounted) {
         setState(() => _breathPhase = newPhase);
       }
@@ -60,9 +69,19 @@ class _ToolsTabState extends State<ToolsTab>
 
   double get _breathScale {
     final t = _breathCtrl.value;
-    if (t < 0.333) return 0.7 + (t / 0.333) * 0.3;
-    if (t < 0.666) return 1.0;
-    return 1.0 - ((t - 0.666) / 0.334) * 0.3;
+    if (t < (1 / 6)) {
+      return 0.65 + (t / (1 / 6)) * 0.35;
+    } else if (t < (2 / 6)) {
+      return 1.0;
+    } else if (t < (3 / 6)) {
+      return 1.0 - ((t - (2 / 6)) / (1 / 6)) * 0.35;
+    } else if (t < (4 / 6)) {
+      return 0.65 + ((t - (3 / 6)) / (1 / 6)) * 0.35;
+    } else if (t < (5 / 6)) {
+      return 1.0;
+    } else {
+      return 1.0 - ((t - (5 / 6)) / (1 / 6)) * 0.35;
+    }
   }
 
   @override
@@ -146,16 +165,15 @@ class _ToolsTabState extends State<ToolsTab>
                         Row(children: [
                           _iconCircle('🌬️', StiraTokens.stiraViolet),
                           const SizedBox(width: 10),
-                          Text('4‑4‑4 Breathing',
+                          Text('Nadi Shodhana',
                               style: GoogleFonts.syne(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                   color: StiraTokens.stiraViolet)),
                         ]),
                         const SizedBox(height: 8),
-                        // Section 6A copy fix: "The simplest regulation tool. Breathe with us — it works."
                         Text(
-                          'The simplest regulation tool. Breathe with us — it works.',
+                          'Ancient alternate nostril breathing to calm urges and stress instantly.',
                           style: StiraTokens.bodyText,
                         ),
                         const SizedBox(height: 16),
@@ -190,7 +208,7 @@ class _ToolsTabState extends State<ToolsTab>
                                       ),
                                       alignment: Alignment.center,
                                       child: Text(
-                                        _breathPhase == 'inhale'
+                                        _breathPhase.contains('inhale')
                                             ? '↑'
                                             : _breathPhase == 'hold'
                                                 ? '—'

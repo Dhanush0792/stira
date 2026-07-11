@@ -63,6 +63,30 @@ service cloud.firestore {
       }
     }
 
+    // ── Bond Requests ─────────────────────────────────────────────────────────
+    // A bond request is keyed by the 6-digit code.
+    // - Any authenticated user can create a request (they are the guest/sender).
+    // - Only the guest (sender) or the host can read the request.
+    // - Only the host or guest can delete the request (after accepting/rejecting).
+    match /bond_requests/{code} {
+      // Any authenticated user can create — they are the requester
+      allow create: if isAuthenticated()
+                    && request.resource.data.guest_uid == request.auth.uid;
+
+      // Only the host or the guest can read the request
+      allow read: if isAuthenticated()
+                  && (request.auth.uid == resource.data.guest_uid
+                      || request.auth.uid == resource.data.host_uid);
+
+      // Only the host or guest can delete (accept / reject)
+      allow delete: if isAuthenticated()
+                    && (request.auth.uid == resource.data.guest_uid
+                        || request.auth.uid == resource.data.host_uid);
+
+      // No updates allowed — create and delete only
+      allow update: if false;
+    }
+
     // ── Helper Functions ──────────────────────────────────────────────────────
 
     /// The user is signed in with a valid Firebase token.

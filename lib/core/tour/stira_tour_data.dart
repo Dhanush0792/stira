@@ -155,9 +155,9 @@ class StiraTourData {
     ),
     "breathing_reset": StiraFeatureInfo(
       featureId: "breathing_reset",
-      title: "90-Second Reset",
-      subtitle: "A guided breathing session to interrupt autopilot in 90 seconds.",
-      body: "The 90-Second Reset is Stira's fastest intervention tool. It opens a full-screen breathing guide with an animated circle that expands and contracts across three phases: inhale for 4 seconds, hold for 4 seconds, exhale for 4 seconds. The visual cue is designed to override the automatic urge response before it peaks. Research shows that 3 full breath cycles are enough to meaningfully reduce acute stress. This tool is automatically surfaced when your check-in intensity is 7 or higher.",
+      title: "Nadi Shodhana Reset",
+      subtitle: "Ancient alternate nostril breathing to calm urges and stress instantly.",
+      body: "Nadi Shodhana (Alternate Nostril Breathing) is Stira's primary yogic intervention tool. It guides you to alternate breathing through the left (cooling/lunar) and right (heating/solar) channels, holding the breath at center during Kumbhaka. This restores hemispheric balance, decreases amygdala hyper-arousal, and resets urge impulses immediately. It is automatically suggested when your check-in urgency rating is high.",
       accentColor: "teal",
       tip: "Tip: Follow the circle visually, not just the timer. The animation is calibrated to the correct pace.",
     ),

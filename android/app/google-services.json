@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "338587847382-pec645u0876dt49tkioft72vm093ss6m.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.stira.app",
+            "certificate_hash": "2d583b5656065e2bfa8213b94ce686141c89c40a"
+          }
+        },
+        {
           "client_id": "338587847382-t753mabjickupbg6n3qj932d62bf569r.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

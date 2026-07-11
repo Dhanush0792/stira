@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800">
+  <defs>
+    <!-- Deep space background -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#1A0B2E"/>
+      <stop offset="100%" stop-color="#07060F"/>
+    </radialGradient>
+
+    <!-- Orb core gradient: pink center → violet edge -->
+    <radialGradient id="orbCore" cx="42%" cy="38%" r="58%">
+      <stop offset="0%" stop-color="#FF6EB0"/>
+      <stop offset="35%" stop-color="#E8307A"/>
+      <stop offset="70%" stop-color="#9B35C5"/>
+      <stop offset="100%" stop-color="#7C4DFF"/>
+    </radialGradient>
+
+    <!-- Outer halo glow -->
+    <radialGradient id="haloGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8307A" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#7C4DFF" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#7C4DFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Pulse line gradient -->
+    <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1ECFB3" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#1ECFB3" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.95"/>
+      <stop offset="80%" stop-color="#E8307A" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#7C4DFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Teal path gradient -->
+    <linearGradient id="tealGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1ECFB3" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#1ECFB3"/>
+      <stop offset="100%" stop-color="#1ECFB3" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Orb inner highlight -->
+    <radialGradient id="orbHighlight" cx="35%" cy="30%" r="40%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Outer glow filter for orb -->
+    <filter id="orbGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="18" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Soft glow filter for pulse line -->
+    <filter id="pulseGlow" x="-20%" y="-300%" width="140%" height="700%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Large outer halo filter -->
+    <filter id="haloFilter" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="40"/>
+    </filter>
+
+    <!-- Teal glow filter -->
+    <filter id="tealGlow" x="-30%" y="-400%" width="160%" height="900%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Ring clip -->
+    <clipPath id="orbClip">
+      <circle cx="400" cy="390" r="148"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" fill="url(#bgGlow)"/>
+
+  <!-- ── OUTER AMBIENT HALO ── -->
+  <circle cx="400" cy="390" r="230" fill="url(#haloGrad)" filter="url(#haloFilter)" opacity="0.9"/>
+
+  <!-- ── ORBITAL RING (faint) ── -->
+  <ellipse cx="400" cy="390" rx="195" ry="195"
+    fill="none"
+    stroke="url(#pulseGrad)"
+    stroke-width="1"
+    opacity="0.18"/>
+
+  <!-- ── SECOND RING ── -->
+  <ellipse cx="400" cy="390" rx="220" ry="220"
+    fill="none"
+    stroke="#7C4DFF"
+    stroke-width="0.5"
+    opacity="0.12"
+    stroke-dasharray="4 8"/>
+
+  <!-- ── ORB GLOW LAYER (blurred copy behind) ── -->
+  <circle cx="400" cy="390" r="148" fill="url(#orbCore)" filter="url(#orbGlow)" opacity="0.55"/>
+
+  <!-- ── ORB MAIN BODY ── -->
+  <circle cx="400" cy="390" r="148" fill="url(#orbCore)"/>
+
+  <!-- ── ORB INNER HIGHLIGHT ── -->
+  <circle cx="400" cy="390" r="148" fill="url(#orbHighlight)"/>
+
+  <!-- ── ORB EDGE RING ── -->
+  <circle cx="400" cy="390" r="148"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="1.2"
+    opacity="0.22"/>
+
+  <!-- ── NEURAL PULSE LINE (goes through orb horizontally) ──
+       A heartbeat / EEG / neural signal path
+       Flat → small rise → dramatic spike → flat → trail off
+       This is the "rewiring" metaphor cutting across the orb
+  -->
+
+  <!-- Teal glow line (wider, blurred behind) -->
+  <path
+    d="M 170 390
+       L 248 390
+       Q 258 390 263 383
+       L 272 368
+       L 280 408
+       L 289 348
+       L 299 432
+       L 308 378
+       L 315 390
+       L 630 390"
+    fill="none"
+    stroke="#1ECFB3"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#tealGlow)"
+    opacity="0.5"/>
+
+  <!-- White core line (sharp, precise) -->
+  <path
+    d="M 170 390
+       L 248 390
+       Q 258 390 263 383
+       L 272 368
+       L 280 408
+       L 289 348
+       L 299 432
+       L 308 378
+       L 315 390
+       L 630 390"
+    fill="none"
+    stroke="url(#pulseGrad)"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#pulseGlow)"/>
+
+  <!-- Bright white core (thinnest, sharpest) -->
+  <path
+    d="M 170 390
+       L 248 390
+       Q 258 390 263 383
+       L 272 368
+       L 280 408
+       L 289 348
+       L 299 432
+       L 308 378
+       L 315 390
+       L 630 390"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="1.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.85"/>
+
+  <!-- ── SPIKE PEAK GLOW (brightest point of the signal) ── -->
+  <circle cx="289" cy="348" r="6" fill="#FFFFFF" opacity="0.9" filter="url(#pulseGlow)"/>
+  <circle cx="289" cy="348" r="3" fill="#FFFFFF"/>
+
+  <!-- ── SMALL DOT NODES on the orb surface (neural nodes) ── -->
+  <!-- Top node -->
+  <circle cx="400" cy="245" r="4" fill="#FFFFFF" opacity="0.7" filter="url(#pulseGlow)"/>
+  <circle cx="400" cy="245" r="2" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- Bottom-right node -->
+  <circle cx="503" cy="463" r="3.5" fill="#1ECFB3" opacity="0.8" filter="url(#tealGlow)"/>
+  <circle cx="503" cy="463" r="1.8" fill="#1ECFB3"/>
+
+  <!-- Left node -->
+  <circle cx="264" cy="340" r="3" fill="#E8307A" opacity="0.7"/>
+
+  <!-- Connecting thread: top node → orb surface (faint) -->
+  <line x1="400" y1="245" x2="400" y2="242"
+    stroke="#FFFFFF" stroke-width="0.5" opacity="0.3"/>
+
+  <!-- ── ORB ATMOSPHERE (subtle inner gradient ring suggesting depth) ── -->
+  <circle cx="400" cy="390" r="120"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="0.5"
+    opacity="0.06"/>
+
+  <!-- ── WORDMARK ── -->
+  <!-- "stira" in a clean geometric sans, tracked out, glowing -->
+
+  <!-- Glow layer behind text -->
+  <text
+    x="400" y="612"
+    font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+    font-size="72"
+    font-weight="700"
+    letter-spacing="14"
+    text-anchor="middle"
+    fill="#E8307A"
+    filter="url(#orbGlow)"
+    opacity="0.4">STIRA</text>
+
+  <!-- Main text -->
+  <text
+    x="400" y="612"
+    font-family="'SF Pro Display', 'Helvetica Neue', Arial, sans-serif"
+    font-size="72"
+    font-weight="700"
+    letter-spacing="14"
+    text-anchor="middle"
+    fill="url(#pulseGrad)"
+    opacity="0.95">STIRA</text>
+
+  <!-- ── TAGLINE ── -->
+  <text
+    x="400" y="648"
+    font-family="'SF Mono', 'Courier New', monospace"
+    font-size="13"
+    font-weight="400"
+    letter-spacing="5"
+    text-anchor="middle"
+    fill="#FFFFFF"
+    opacity="0.28">BEHAVIORAL INTELLIGENCE</text>
+
+  <!-- ── SUBTLE CORNER DETAILS (micro grid marks) ── -->
+  <line x1="60" y1="60" x2="80" y2="60" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+  <line x1="60" y1="60" x2="60" y2="80" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+  <line x1="740" y1="60" x2="720" y2="60" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+  <line x1="740" y1="60" x2="740" y2="80" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+  <line x1="60" y1="740" x2="80" y2="740" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+  <line x1="60" y1="740" x2="60" y2="720" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+  <line x1="740" y1="740" x2="720" y2="740" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+  <line x1="740" y1="740" x2="740" y2="720" stroke="#7C4DFF" stroke-width="0.8" opacity="0.3"/>
+
+</svg>

@@ -5,6 +5,8 @@ import '../../theme/stira_tokens.dart';
 import '../../widgets/stira_orb.dart';
 import '../../services/stira_auth_service.dart';
 import '../../core/auth_wrapper.dart';
+import '../profile/legal_support_screens.dart';
+
 
 // ─── Welcome / Authentication Screen ─────────────────────────────────────────
 //
@@ -174,16 +176,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 children: [
                   const Spacer(flex: 2),
 
-                  // ── Orb ─────────────────────────────────────────────────
+                  // ── Logo Showcase ─────────────────────────────────────────
                   _fade(
                     0,
                     AnimatedBuilder(
                       animation: _pulseCtrl,
                       builder: (_, child) => Transform.scale(
-                        scale: 0.94 + (_pulseCtrl.value * 0.12),
+                        scale: 0.96 + (_pulseCtrl.value * 0.08),
                         child: child,
                       ),
-                      child: const StiraOrb(size: 88, intensity: 0.6),
+                      child: Image.asset(
+                        'assets/icon/stira_logo_showcase.png',
+                        height: 120,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
 
@@ -416,19 +422,68 @@ class _GoogleGIcon extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(4),
       ),
-      child: const Center(
-        child: Text(
-          'G',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF4285F4),
-            height: 1,
-          ),
-        ),
+      padding: const EdgeInsets.all(3),
+      child: CustomPaint(
+        painter: _GoogleGLogoPainter(),
       ),
     );
   }
+}
+
+class _GoogleGLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final double w = size.width;
+    final double h = size.height;
+    final double r = w / 2;
+    final Paint paint = Paint()..style = PaintingStyle.fill;
+    final Rect rect = Rect.fromLTWH(0, 0, w, h);
+
+    // Red sector (top)
+    paint.color = const Color(0xFFEA4335);
+    final Path redPath = Path()
+      ..moveTo(r, r)
+      ..lineTo(r + r * 0.86, r - r * 0.5)
+      ..arcTo(rect, -0.5235, -2.0944, false)
+      ..close();
+    canvas.drawPath(redPath, paint);
+
+    // Yellow sector (left)
+    paint.color = const Color(0xFFFBBC05);
+    final Path yellowPath = Path()
+      ..moveTo(r, r)
+      ..lineTo(r - r * 0.5, r - r * 0.86)
+      ..arcTo(rect, -2.618, -1.0472, false)
+      ..close();
+    canvas.drawPath(yellowPath, paint);
+
+    // Green sector (bottom)
+    paint.color = const Color(0xFF34A853);
+    final Path greenPath = Path()
+      ..moveTo(r, r)
+      ..lineTo(r - r * 0.86, r + r * 0.5)
+      ..arcTo(rect, 2.618, -2.0944, false)
+      ..close();
+    canvas.drawPath(greenPath, paint);
+
+    // Blue sector & horizontal bar (right)
+    paint.color = const Color(0xFF4285F4);
+    final Path bluePath = Path()
+      ..moveTo(r, r)
+      ..lineTo(r, r - r * 0.1) // start of internal horizontal bar
+      ..lineTo(w, r - r * 0.1)
+      ..lineTo(w, r + r * 0.1)
+      ..arcTo(rect, 0.5235, -1.0472, false)
+      ..close();
+    canvas.drawPath(bluePath, paint);
+
+    // Draw inner white circle to create the donut shape
+    paint.color = Colors.white;
+    canvas.drawCircle(Offset(r, r), r * 0.5, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ─── Guest Button ──────────────────────────────────────────────────────────────
@@ -494,9 +549,11 @@ class _PrivacyFooter extends StatelessWidget {
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
-                // Privacy Policy URL — update before publishing.
-                // Could use url_launcher here when the URL is ready.
-                debugPrint('Privacy Policy tapped');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const LegalSupportScreen(initialTabIndex: 2),
+                  ),
+                );
               },
           ),
           const TextSpan(text: ' and '),
@@ -510,12 +567,17 @@ class _PrivacyFooter extends StatelessWidget {
             ),
             recognizer: TapGestureRecognizer()
               ..onTap = () {
-                debugPrint('Terms of Service tapped');
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const LegalSupportScreen(initialTabIndex: 3),
+                  ),
+                );
               },
           ),
           const TextSpan(text: '.'),
         ],
       ),
+
     );
   }
 }

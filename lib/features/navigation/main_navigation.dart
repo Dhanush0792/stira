@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/stira_tokens.dart';
 import '../../widgets/stira_bottom_nav.dart';
+import '../../widgets/stira_notification_banner.dart';
 import './tabs/home_tab.dart';
 import './tabs/insights_tab.dart';
 import './tabs/tools_tab.dart';
@@ -110,6 +111,14 @@ class _MainNavigationState extends ConsumerState<MainNavigation> with WidgetsBin
               return StiraTourOverlay();
             }
             return const SizedBox.shrink();
+          },
+        ),
+        InAppNotificationBanner(
+          onTap: () {
+            final notif = StiraNotificationService.inAppNotificationNotifier.value;
+            if (notif != null && notif['payload'] != null) {
+              _handleDeepLink(notif['payload']!);
+            }
           },
         ),
       ],

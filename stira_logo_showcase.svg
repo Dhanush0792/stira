@@ -1,0 +1,330 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" width="1400" height="900">
+  <defs>
+    <!-- Shared gradients -->
+    <radialGradient id="S_bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#120820"/>
+      <stop offset="100%" stop-color="#07060F"/>
+    </radialGradient>
+
+    <radialGradient id="S_orb" cx="40%" cy="36%" r="60%">
+      <stop offset="0%" stop-color="#FF72B5"/>
+      <stop offset="30%" stop-color="#E8307A"/>
+      <stop offset="68%" stop-color="#A030CC"/>
+      <stop offset="100%" stop-color="#7C4DFF"/>
+    </radialGradient>
+
+    <radialGradient id="S_orbSm" cx="40%" cy="36%" r="60%">
+      <stop offset="0%" stop-color="#FF72B5"/>
+      <stop offset="30%" stop-color="#E8307A"/>
+      <stop offset="68%" stop-color="#A030CC"/>
+      <stop offset="100%" stop-color="#7C4DFF"/>
+    </radialGradient>
+
+    <radialGradient id="S_hl" cx="33%" cy="28%" r="42%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="S_hlSm" cx="33%" cy="28%" r="42%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="S_amb1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8307A" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#E8307A" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="S_amb2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8307A" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#E8307A" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="S_amb3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8307A" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#E8307A" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="S_pulse1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1ECFB3" stop-opacity="0"/>
+      <stop offset="15%" stop-color="#1ECFB3" stop-opacity="0.8"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="78%" stop-color="#E8307A" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#7C4DFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="S_pulse2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1ECFB3" stop-opacity="0"/>
+      <stop offset="15%" stop-color="#1ECFB3" stop-opacity="0.8"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="78%" stop-color="#E8307A" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#7C4DFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="S_pulse3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1ECFB3" stop-opacity="0"/>
+      <stop offset="15%" stop-color="#1ECFB3" stop-opacity="0.8"/>
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="1"/>
+      <stop offset="78%" stop-color="#E8307A" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#7C4DFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="S_wordmark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E8307A"/>
+      <stop offset="50%" stop-color="#C040E0"/>
+      <stop offset="100%" stop-color="#7C4DFF"/>
+    </linearGradient>
+
+    <linearGradient id="S_divider" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="S_oGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="20" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+
+    <filter id="S_oGlowSm" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="12" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+
+    <filter id="S_halo" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="45"/>
+    </filter>
+
+    <filter id="S_haloSm" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="28"/>
+    </filter>
+
+    <filter id="S_tGlow" x="-40%" y="-600%" width="180%" height="1300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+
+    <filter id="S_tGlowSm" x="-40%" y="-600%" width="180%" height="1300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+
+    <filter id="S_spGlow" x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="12"/>
+    </filter>
+
+    <filter id="S_spGlowSm" x="-300%" y="-300%" width="700%" height="700%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7"/>
+    </filter>
+
+    <filter id="S_textGlow" x="-20%" y="-100%" width="140%" height="300%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="b"/>
+      <feComposite in="SourceGraphic" in2="b" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- BACKGROUND -->
+  <!-- ══════════════════════════════════════ -->
+  <rect width="1400" height="900" fill="url(#S_bg)"/>
+
+  <!-- Subtle grid lines -->
+  <line x1="700" y1="0" x2="700" y2="900" stroke="#FFFFFF" stroke-width="0.3" opacity="0.04"/>
+  <line x1="0" y1="450" x2="1400" y2="450" stroke="#FFFFFF" stroke-width="0.3" opacity="0.04"/>
+
+  <!-- Section dividers -->
+  <line x1="467" y1="60" x2="467" y2="840" stroke="url(#S_divider)" stroke-width="1"/>
+  <line x1="934" y1="60" x2="934" y2="840" stroke="url(#S_divider)" stroke-width="1"/>
+
+  <!-- Section labels -->
+  <text x="233" y="848" font-family="'Courier New', monospace" font-size="10" letter-spacing="3"
+    fill="#FFFFFF" opacity="0.25" text-anchor="middle">PRIMARY MARK</text>
+  <text x="700" y="848" font-family="'Courier New', monospace" font-size="10" letter-spacing="3"
+    fill="#FFFFFF" opacity="0.25" text-anchor="middle">HORIZONTAL LOCKUP</text>
+  <text x="1167" y="848" font-family="'Courier New', monospace" font-size="10" letter-spacing="3"
+    fill="#FFFFFF" opacity="0.25" text-anchor="middle">APP ICON</text>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SECTION 1 — PRIMARY MARK (left third) -->
+  <!-- Orb centered at 233, 400 -->
+  <!-- ══════════════════════════════════════ -->
+
+  <!-- Ambient halo -->
+  <circle cx="233" cy="390" r="195" fill="url(#S_amb1)" filter="url(#S_halo)" opacity="0.8"/>
+
+  <!-- Faint orbital rings -->
+  <circle cx="233" cy="390" r="162" fill="none" stroke="#E8307A" stroke-width="0.7" opacity="0.10"/>
+  <circle cx="233" cy="390" r="180" fill="none" stroke="#7C4DFF" stroke-width="0.5" opacity="0.07" stroke-dasharray="4 8"/>
+
+  <!-- Orb glow -->
+  <circle cx="233" cy="390" r="120" fill="url(#S_orb)" filter="url(#S_oGlow)" opacity="0.48"/>
+
+  <!-- Orb body -->
+  <circle cx="233" cy="390" r="120" fill="url(#S_orb)"/>
+  <circle cx="233" cy="390" r="120" fill="url(#S_hl)"/>
+  <circle cx="233" cy="390" r="120" fill="none" stroke="#FFFFFF" stroke-width="1.2" opacity="0.18"/>
+  <circle cx="233" cy="390" r="96" fill="none" stroke="#FFFFFF" stroke-width="0.5" opacity="0.06"/>
+
+  <!-- Pulse line through orb -->
+  <!-- Teal glow -->
+  <path d="M 83 390 L 155 390 Q 163 390 167 384 L 174 371 L 181 403 L 188 351 L 196 429 L 203 382 L 208 390 L 383 390"
+    fill="none" stroke="#1ECFB3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"
+    filter="url(#S_tGlow)" opacity="0.42"/>
+  <!-- Gradient -->
+  <path d="M 83 390 L 155 390 Q 163 390 167 384 L 174 371 L 181 403 L 188 351 L 196 429 L 203 382 L 208 390 L 383 390"
+    fill="none" stroke="url(#S_pulse1)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- White core -->
+  <path d="M 83 390 L 155 390 Q 163 390 167 384 L 174 371 L 181 403 L 188 351 L 196 429 L 203 382 L 208 390 L 383 390"
+    fill="none" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.82"/>
+
+  <!-- Spike peak -->
+  <circle cx="188" cy="351" r="9" fill="#FFFFFF" opacity="0.85" filter="url(#S_spGlow)"/>
+  <circle cx="188" cy="351" r="3.5" fill="#FFFFFF"/>
+
+  <!-- Neural nodes -->
+  <circle cx="233" cy="272" r="5" fill="#FFFFFF" opacity="0.60" filter="url(#S_tGlow)"/>
+  <circle cx="233" cy="272" r="2.5" fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="319" cy="448" r="4" fill="#1ECFB3" opacity="0.75" filter="url(#S_tGlowSm)"/>
+  <circle cx="319" cy="448" r="2" fill="#1ECFB3"/>
+
+  <!-- Wordmark below orb -->
+  <text x="233" y="574" font-family="'Helvetica Neue', Arial, sans-serif" font-size="52"
+    font-weight="700" letter-spacing="11" text-anchor="middle"
+    fill="url(#S_wordmark)" filter="url(#S_textGlow)" opacity="0.35">STIRA</text>
+  <text x="233" y="574" font-family="'Helvetica Neue', Arial, sans-serif" font-size="52"
+    font-weight="700" letter-spacing="11" text-anchor="middle"
+    fill="url(#S_wordmark)">STIRA</text>
+
+  <!-- Tagline -->
+  <text x="233" y="604" font-family="'Courier New', monospace" font-size="10"
+    letter-spacing="4" text-anchor="middle" fill="#FFFFFF" opacity="0.25">BEHAVIORAL INTELLIGENCE</text>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SECTION 2 — HORIZONTAL LOCKUP (center third) -->
+  <!-- Orb at 570, 390 — wordmark right of it -->
+  <!-- ══════════════════════════════════════ -->
+
+  <!-- Ambient -->
+  <circle cx="580" cy="390" r="160" fill="url(#S_amb2)" filter="url(#S_haloSm)" opacity="0.7"/>
+
+  <!-- Orb glow -->
+  <circle cx="580" cy="390" r="90" fill="url(#S_orbSm)" filter="url(#S_oGlowSm)" opacity="0.48"/>
+  <!-- Orb body -->
+  <circle cx="580" cy="390" r="90" fill="url(#S_orbSm)"/>
+  <circle cx="580" cy="390" r="90" fill="url(#S_hlSm)"/>
+  <circle cx="580" cy="390" r="90" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.18"/>
+  <circle cx="580" cy="390" r="72" fill="none" stroke="#FFFFFF" stroke-width="0.5" opacity="0.06"/>
+
+  <!-- Pulse line horizontal variant -->
+  <path d="M 468 390 L 527 390 Q 533 390 537 385 L 543 375 L 549 400 L 555 362 L 562 418 L 568 385 L 572 390 L 692 390"
+    fill="none" stroke="#1ECFB3" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"
+    filter="url(#S_tGlowSm)" opacity="0.40"/>
+  <path d="M 468 390 L 527 390 Q 533 390 537 385 L 543 375 L 549 400 L 555 362 L 562 418 L 568 385 L 572 390 L 692 390"
+    fill="none" stroke="url(#S_pulse2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 468 390 L 527 390 Q 533 390 537 385 L 543 375 L 549 400 L 555 362 L 562 418 L 568 385 L 572 390 L 692 390"
+    fill="none" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.80"/>
+
+  <!-- Spike peak -->
+  <circle cx="555" cy="362" r="7" fill="#FFFFFF" opacity="0.85" filter="url(#S_spGlowSm)"/>
+  <circle cx="555" cy="362" r="2.8" fill="#FFFFFF"/>
+
+  <!-- Neural nodes -->
+  <circle cx="580" cy="302" r="4" fill="#FFFFFF" opacity="0.55" filter="url(#S_tGlowSm)"/>
+  <circle cx="580" cy="302" r="2" fill="#FFFFFF" opacity="0.85"/>
+  <circle cx="646" cy="434" r="3" fill="#1ECFB3" opacity="0.70"/>
+  <circle cx="646" cy="434" r="1.5" fill="#1ECFB3"/>
+
+  <!-- Wordmark — right of orb -->
+  <!-- Glow -->
+  <text x="720" y="406" font-family="'Helvetica Neue', Arial, sans-serif" font-size="72"
+    font-weight="700" letter-spacing="6" text-anchor="start"
+    fill="url(#S_wordmark)" filter="url(#S_textGlow)" opacity="0.30">stira</text>
+  <!-- Main -->
+  <text x="720" y="406" font-family="'Helvetica Neue', Arial, sans-serif" font-size="72"
+    font-weight="700" letter-spacing="6" text-anchor="start"
+    fill="url(#S_wordmark)">stira</text>
+  <!-- Tagline under wordmark -->
+  <text x="724" y="430" font-family="'Courier New', monospace" font-size="11"
+    letter-spacing="3.5" text-anchor="start" fill="#FFFFFF" opacity="0.28">behavioral intelligence</text>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- SECTION 3 — APP ICON (right third) -->
+  <!-- Rounded square at 1167,390 — icon only, no text -->
+  <!-- ══════════════════════════════════════ -->
+
+  <!-- Icon background - rounded square -->
+  <rect x="967" y="190" width="400" height="400" rx="88" ry="88"
+    fill="#0D0B1A"/>
+  <!-- Inner radial bg -->
+  <rect x="967" y="190" width="400" height="400" rx="88" ry="88"
+    fill="url(#S_amb3)" opacity="0.4"/>
+
+  <!-- Faint rings -->
+  <circle cx="1167" cy="390" r="155" fill="none" stroke="#E8307A" stroke-width="0.7" opacity="0.09"/>
+  <circle cx="1167" cy="390" r="172" fill="none" stroke="#7C4DFF" stroke-width="0.5" opacity="0.06" stroke-dasharray="5 9"/>
+
+  <!-- Ambient glow inside icon -->
+  <circle cx="1167" cy="390" r="130" fill="url(#S_amb3)" filter="url(#S_haloSm)" opacity="0.65"/>
+
+  <!-- Orb glow -->
+  <circle cx="1167" cy="390" r="108" fill="url(#S_orbSm)" filter="url(#S_oGlowSm)" opacity="0.50"/>
+  <!-- Orb body -->
+  <circle cx="1167" cy="390" r="108" fill="url(#S_orbSm)"/>
+  <circle cx="1167" cy="390" r="108" fill="url(#S_hlSm)"/>
+  <circle cx="1167" cy="390" r="108" fill="none" stroke="#FFFFFF" stroke-width="1.2" opacity="0.20"/>
+  <circle cx="1167" cy="390" r="86" fill="none" stroke="#FFFFFF" stroke-width="0.5" opacity="0.07"/>
+
+  <!-- Pulse line -->
+  <path d="M 1025 390 L 1103 390 Q 1111 390 1116 383 L 1124 369 L 1132 408 L 1141 346 L 1151 434 L 1160 382 L 1166 390 L 1309 390"
+    fill="none" stroke="#1ECFB3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"
+    filter="url(#S_tGlow)" opacity="0.42"/>
+  <path d="M 1025 390 L 1103 390 Q 1111 390 1116 383 L 1124 369 L 1132 408 L 1141 346 L 1151 434 L 1160 382 L 1166 390 L 1309 390"
+    fill="none" stroke="url(#S_pulse3)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 1025 390 L 1103 390 Q 1111 390 1116 383 L 1124 369 L 1132 408 L 1141 346 L 1151 434 L 1160 382 L 1166 390 L 1309 390"
+    fill="none" stroke="#FFFFFF" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.80"/>
+
+  <!-- Icon border clipping (mask lines outside rounded square) -->
+  <rect x="967" y="190" width="400" height="400" rx="88" ry="88"
+    fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.10"/>
+
+  <!-- Spike -->
+  <circle cx="1141" cy="346" r="10" fill="#FFFFFF" opacity="0.88" filter="url(#S_spGlow)"/>
+  <circle cx="1141" cy="346" r="4" fill="#FFFFFF"/>
+  <circle cx="1141" cy="346" r="2" fill="#FFFFFF"/>
+
+  <!-- Nodes -->
+  <circle cx="1167" cy="285" r="5.5" fill="#FFFFFF" opacity="0.60" filter="url(#S_tGlow)"/>
+  <circle cx="1167" cy="285" r="2.5" fill="#FFFFFF" opacity="0.90"/>
+  <circle cx="1258" cy="452" r="4.5" fill="#1ECFB3" opacity="0.75" filter="url(#S_tGlowSm)"/>
+  <circle cx="1258" cy="452" r="2.2" fill="#1ECFB3"/>
+  <circle cx="1098" cy="348" r="3.5" fill="#E8307A" opacity="0.55"/>
+
+
+  <!-- ══════════════════════════════════════ -->
+  <!-- COLOR PALETTE STRIP at bottom -->
+  <!-- ══════════════════════════════════════ -->
+  <text x="700" y="780" font-family="'Courier New', monospace" font-size="9" letter-spacing="2"
+    fill="#FFFFFF" opacity="0.20" text-anchor="middle">COLOR SYSTEM</text>
+
+  <!-- Swatch row -->
+  <rect x="474" y="790" width="52" height="16" rx="3" fill="#E8307A"/>
+  <rect x="534" y="790" width="52" height="16" rx="3" fill="#7C4DFF"/>
+  <rect x="594" y="790" width="52" height="16" rx="3" fill="#1ECFB3"/>
+  <rect x="654" y="790" width="52" height="16" rx="3" fill="#F5A623"/>
+  <rect x="714" y="790" width="52" height="16" rx="3" fill="#07060F" stroke="#FFFFFF" stroke-width="0.5" stroke-opacity="0.2"/>
+  <rect x="774" y="790" width="52" height="16" rx="3" fill="#0D0B1A" stroke="#FFFFFF" stroke-width="0.5" stroke-opacity="0.2"/>
+  <rect x="834" y="790" width="52" height="16" rx="3" fill="#FFFFFF" opacity="0.9"/>
+
+  <text x="500" y="820" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#E8307A" opacity="0.7">#E8307A</text>
+  <text x="560" y="820" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#7C4DFF" opacity="0.8">#7C4DFF</text>
+  <text x="620" y="820" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#1ECFB3" opacity="0.8">#1ECFB3</text>
+  <text x="680" y="820" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#F5A623" opacity="0.8">#F5A623</text>
+  <text x="740" y="820" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#FFFFFF" opacity="0.35">#07060F</text>
+  <text x="800" y="820" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#FFFFFF" opacity="0.35">#0D0B1A</text>
+  <text x="860" y="820" font-family="'Courier New', monospace" font-size="8" text-anchor="middle" fill="#FFFFFF" opacity="0.5">#FFFFFF</text>
+
+</svg>

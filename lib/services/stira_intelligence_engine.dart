@@ -65,7 +65,8 @@ class StiraIntelligenceEngine {
       final msg = StiraNotificationMessages.urgeVelocity(snapshot);
       await StiraNotificationService.showNow(
         StiraNotificationService.ID_URGE_VELOCITY,
-        msg['title']!, msg['body']!, "stira_critical", msg['payload']!
+        msg['title']!, msg['body']!, "stira_critical", msg['payload']!,
+        showInApp: false,
       );
       StiraThrottleManager.recordSent();
       return;
@@ -79,7 +80,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.streakMilestone(snapshot.currentStreak, snapshot.userName);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_STREAK_MILESTONE,
-          msg['title']!, msg['body']!, "stira_high", msg['payload']!
+          msg['title']!, msg['body']!, "stira_high", msg['payload']!,
+          showInApp: false,
         );
         prefs.put('last_milestone_fired', snapshot.currentStreak);
         StiraThrottleManager.recordSent();
@@ -93,7 +95,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.preMilestone(snapshot.currentStreak + 1);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_PRE_MILESTONE,
-          msg['title']!, msg['body']!, "stira_high", msg['payload']!
+          msg['title']!, msg['body']!, "stira_high", msg['payload']!,
+          showInApp: false,
         );
         StiraThrottleManager.recordSent();
         return;
@@ -106,7 +109,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.sameTimeTomorrow(snapshot.userName, snapshot.commitmentText);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_SAME_TIME_TOMORROW,
-          msg['title']!, msg['body']!, "stira_high", msg['payload']!
+          msg['title']!, msg['body']!, "stira_high", msg['payload']!,
+          showInApp: false,
         );
         StiraThrottleManager.recordSent();
         return;
@@ -124,7 +128,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.vulnerabilityWarning(snapshot);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_VULNERABILITY_WARNING,
-          msg['title']!, msg['body']!, "stira_high", msg['payload']!
+          msg['title']!, msg['body']!, "stira_high", msg['payload']!,
+          showInApp: false,
         );
         StiraThrottleManager.recordSent();
         return;
@@ -159,7 +164,8 @@ class StiraIntelligenceEngine {
             final msg = StiraNotificationMessages.checkInReminder(snapshot);
             await StiraNotificationService.showNow(
               StiraNotificationService.ID_CHECKIN_REMINDER,
-              msg['title']!, msg['body']!, "stira_high", msg['payload']!
+              msg['title']!, msg['body']!, "stira_high", msg['payload']!,
+              showInApp: false,
             );
             StiraThrottleManager.recordSent();
             return;
@@ -174,7 +180,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.disengagement72h(snapshot);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_DISENGAGEMENT_72H,
-          msg['title']!, msg['body']!, "stira_low", msg['payload']!
+          msg['title']!, msg['body']!, "stira_low", msg['payload']!,
+          showInApp: false,
         );
         StiraThrottleManager.recordSent();
         return;
@@ -184,7 +191,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.disengagement48h(snapshot);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_DISENGAGEMENT_48H,
-          msg['title']!, msg['body']!, "stira_low", msg['payload']!
+          msg['title']!, msg['body']!, "stira_low", msg['payload']!,
+          showInApp: false,
         );
         StiraThrottleManager.recordSent();
         return;
@@ -197,7 +205,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.dopamineJournal();
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_DOPAMINE_JOURNAL,
-          msg['title']!, msg['body']!, "stira_low", msg['payload']!
+          msg['title']!, msg['body']!, "stira_low", msg['payload']!,
+          showInApp: false,
         );
         StiraThrottleManager.recordSent();
         return;
@@ -210,7 +219,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.identityPush(snapshot.daysSinceInstall);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_IDENTITY_PUSH,
-          msg['title']!, msg['body']!, "stira_low", msg['payload']!
+          msg['title']!, msg['body']!, "stira_low", msg['payload']!,
+          showInApp: false,
         );
         StiraThrottleManager.recordSent();
         return;
@@ -226,7 +236,8 @@ class StiraIntelligenceEngine {
           final msg = StiraNotificationMessages.weeklyReport();
           await StiraNotificationService.showNow(
             StiraNotificationService.ID_WEEKLY_REPORT,
-            msg['title']!, msg['body']!, "stira_low", msg['payload']!
+            msg['title']!, msg['body']!, "stira_low", msg['payload']!,
+            showInApp: false,
           );
           prefs.put('last_weekly_report_sent', todayDateStr);
           StiraThrottleManager.recordSent();
@@ -250,7 +261,8 @@ class StiraIntelligenceEngine {
         final msg = StiraNotificationMessages.stabilityImproving(snapshot);
         await StiraNotificationService.showNow(
           StiraNotificationService.ID_STABILITY_UP,
-          msg['title']!, msg['body']!, "stira_low", msg['payload']!
+          msg['title']!, msg['body']!, "stira_low", msg['payload']!,
+          showInApp: false,
         );
         prefs.put('last_stability_notif', now.toIso8601String());
         StiraThrottleManager.recordSent();
@@ -311,7 +323,8 @@ class StiraIntelligenceEngine {
       
       await StiraNotificationService.showNow(
         StiraNotificationService.ID_RELAPSE_SUPPORT,
-        msg['title']!, msg['body']!, "stira_critical", msg['payload']!
+        msg['title']!, msg['body']!, "stira_critical", msg['payload']!,
+        showInApp: true,
       );
       
       StiraThrottleManager.recordSent();

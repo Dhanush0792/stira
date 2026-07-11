@@ -115,13 +115,24 @@ class _ColorClashScreenState extends State<ColorClashScreen> {
             letterSpacing: 2,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 4),
         Text(
-          _displayText,
-          style: GoogleFonts.syne(
-            fontSize: 72,
-            fontWeight: FontWeight.w900,
-            color: _displayColor,
+          '(Tap the ink color, not what the word says!)',
+          style: GoogleFonts.dmSans(
+            color: StiraTokens.stiraMuted.withValues(alpha: 0.8),
+            fontSize: 11,
+          ),
+        ),
+        const SizedBox(height: 24),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            _displayText,
+            style: GoogleFonts.syne(
+              fontSize: 54,
+              fontWeight: FontWeight.w900,
+              color: _displayColor,
+            ),
           ),
         ),
         const Spacer(),

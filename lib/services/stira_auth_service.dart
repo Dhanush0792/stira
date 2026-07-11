@@ -1,8 +1,11 @@
-﻿import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'local_storage.dart';
+import 'cloud_sync_service.dart';
+import 'auth_service.dart';
+
 
 class StiraAuthService {
   final _auth = FirebaseAuth.instance;
@@ -25,15 +28,62 @@ class StiraAuthService {
       final User user = userCred.user!;
       final bool isNew = userCred.additionalUserInfo?.isNewUser ?? false;
       await _upsertUserDocument(user, isNew: isNew);
-      return AuthResult.success(user, isNewUser: isNew);
+
+      // Always clear guest mode when a real account signs in
+      await StorageService().setGuestMode(false);
+
+      bool completedOnboarding = false;
+      if (!isNew) {
+        final firestoreOnboarded = await checkOnboardingComplete(user.uid);
+        if (firestoreOnboarded) {
+          completedOnboarding = true;
+          final storage = StorageService();
+          await storage.setOnboardingCompleted();
+          final doc = await _db.collection('users').doc(user.uid).get();
+          final profileData = doc.data()?['profile'] as Map<String, dynamic>?;
+          if (profileData != null) {
+            await storage.saveProfile(profileData);
+          } else {
+            await storage.saveProfile({'name': user.displayName ?? ''});
+          }
+        }
+      } else {
+        // New user: save displayName to local storage immediately so profile shows name
+        final storage = StorageService();
+        final name = user.displayName ?? '';
+        if (name.isNotEmpty) {
+          await storage.saveProfile({'name': name});
+        }
+      }
+
+      // Sync local stats and history to Firebase Firestore immediately upon successful sign-in
+      try {
+        final syncService = CloudSyncService(
+          _db,
+          AuthService(_auth),
+          StorageService(),
+        );
+        await syncService.syncHistoryToCloud();
+      } catch (syncErr) {
+        debugPrint('Post-login automatic CloudSync failed: $syncErr');
+      }
+
+      return AuthResult.success(user, isNewUser: isNew && !completedOnboarding);
+
     } on FirebaseAuthException catch (e) {
       debugPrint('StiraAuth Google error [${e.code}]: ${e.message}');
       return AuthResult.failure(_mapAuthError(e.code));
     } catch (e) {
       final msg = e.toString();
-      debugPrint('StiraAuth Google unexpected error: $msg');
-      if (msg.contains(': 10') || msg.contains('10:') || msg.contains('ApiException: 10')) {
-        return AuthResult.failure('Google sign-in is not configured for this device. Please contact support.');
+      if (kDebugMode) debugPrint('StiraAuth Google unexpected error: $msg');
+      // API Exception 10 means the SHA-1 fingerprint or OAuth client is
+      // misconfigured in the Firebase Console — never silently fall back
+      // to anonymous auth, as that creates orphaned ghost accounts.
+      if (msg.contains(': 10') || msg.contains('ApiException: 10') || msg.contains('DEVELOPER_ERROR')) {
+        return AuthResult.failure(
+          'Google sign-in is not set up correctly on this device.\n'
+          'Please check your internet connection and try again.',
+        );
       }
       return AuthResult.failure('Google sign-in failed. Please try again.');
     }

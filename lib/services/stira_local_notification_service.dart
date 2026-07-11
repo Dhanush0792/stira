@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -8,6 +10,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 
 class StiraNotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  static const MethodChannel _platform = MethodChannel('com.stira.app/battery');
 
   static const int ID_CHECKIN_REMINDER = 101;
   static const int ID_CHECKIN_FOLLOWUP = 102;
@@ -50,7 +53,7 @@ class StiraNotificationService {
     }
 
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('ic_notification');
+        AndroidInitializationSettings('ic_launcher');
     
     // Do not request immediately on iOS, let requestPermission() handle it
     const DarwinInitializationSettings iosSettings =
@@ -106,8 +109,23 @@ class StiraNotificationService {
     }
   }
 
-  static Future<void> showNow(int id, String title, String body, String channelId, String payload) async {
+  static final ValueNotifier<Map<String, String>?> inAppNotificationNotifier = ValueNotifier<Map<String, String>?>(null);
+
+  static void clearInAppNotification() {
+    inAppNotificationNotifier.value = null;
+  }
+
+  static Future<void> showNow(int id, String title, String body, String channelId, String payload, {bool showInApp = true}) async {
     await _plugin.cancel(id: id);
+    
+    // Broadcast for in-app banner ONLY if showInApp is true
+    if (showInApp) {
+      inAppNotificationNotifier.value = {
+        'title': title,
+        'body': body,
+        'payload': payload,
+      };
+    }
     
     String channelName = 'Stira Updates';
     if (channelId == 'stira_critical') channelName = 'Stira Alerts';
@@ -169,5 +187,64 @@ class StiraNotificationService {
     final status = await Permission.notification.status;
     final prefs = Hive.box('stira_prefs');
     await prefs.put('notifications_enabled', status.isGranted);
+  }
+
+  /// Checks if battery optimization is disabled for the app.
+  static Future<bool> isBatteryOptimizationIgnored() async {
+    try {
+      return await _platform.invokeMethod<bool>('isBatteryOptimizationIgnored') ?? false;
+    } on PlatformException {
+      return false;
+    }
+  }
+
+  /// Requests the OS to ignore battery optimization for Stira.
+  static Future<void> requestIgnoreBatteryOptimization() async {
+    try {
+      await _platform.invokeMethod('requestIgnoreBatteryOptimization');
+    } on PlatformException catch (e) {
+      print("Failed to request battery optimization ignore: $e");
+    }
+  }
+
+  /// Schedules a highly resilient notification that triggers even in Doze/Idle modes.
+  static Future<void> scheduleResilientNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledTime,
+    String? payload,
+  }) async {
+    // Safe check for Exact Alarms permission (Android 13+)
+    bool canScheduleExact = true;
+    try {
+      canScheduleExact = await Permission.scheduleExactAlarm.isGranted;
+    } catch (_) {
+      canScheduleExact = false;
+    }
+
+    final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'stira_critical',
+      'Stira Alerts',
+      channelDescription: 'Time-critical intervention alerts',
+      importance: Importance.max,
+      priority: Priority.high,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
+      showWhen: true,
+      styleInformation: BigTextStyleInformation(body),
+    );
+
+    await _plugin.zonedSchedule(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: tz.TZDateTime.from(scheduledTime, tz.local),
+      notificationDetails: NotificationDetails(android: androidDetails),
+      androidScheduleMode: canScheduleExact 
+          ? AndroidScheduleMode.exactAllowWhileIdle 
+          : AndroidScheduleMode.inexactAllowWhileIdle,
+      payload: payload,
+    );
   }
 }

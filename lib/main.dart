@@ -56,7 +56,7 @@ void main() async {
   
   unawaited(StiraNotificationService.requestPermission());
   unawaited(StiraIntelligenceEngine.startBackgroundCycle());
-  StiraIntelligenceEngine.reactToAction(UserAction.appOpened);
+
 
   // Legacy migration check
   unawaited(StorageService.migrateIfNeeded());
@@ -90,9 +90,7 @@ class _StiraAppState extends State<StiraApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      StiraIntelligenceEngine.reactToAction(UserAction.appOpened);
-    }
+    // Only refresh state or metrics if necessary, do not trigger alerts
   }
 
   @override

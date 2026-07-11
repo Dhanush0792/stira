@@ -4,7 +4,7 @@ import '../services/stira_auth_service.dart';
 import '../services/local_storage.dart';
 import '../features/navigation/main_navigation.dart';
 import '../features/onboarding/welcome_screen.dart';
-import '../features/onboarding/onboarding_assessment.dart';
+import '../features/onboarding/name_input_screen.dart';
 import '../features/profile/disguise_screens.dart';
 
 // ─── Auth Wrapper ─────────────────────────────────────────────────────────────
@@ -36,6 +36,10 @@ class AuthWrapper extends StatelessWidget {
         // ── Guest Mode ──────────────────────────────────────────────────────
         // User chose "Continue as Guest" — treat as authenticated locally.
         if (storage.isGuestMode && snapshot.data == null) {
+          final onboardingDone = storage.onboardingCompleted;
+          if (!onboardingDone) {
+            return ShadowWrapper(child: const NameInputScreen());
+          }
           return ShadowWrapper(child: const MainNavigation());
         }
 
@@ -46,12 +50,11 @@ class AuthWrapper extends StatelessWidget {
 
         // ── Authenticated ───────────────────────────────────────────────────
         // Check onboarding status from local Hive (fast, no network call).
-        // Firestore is the source of truth but Hive is always written first.
         final onboardingDone = storage.onboardingCompleted;
 
         if (!onboardingDone) {
-          // First-time user: go through the full onboarding flow.
-          return ShadowWrapper(child: const OnboardingAssessment());
+          // New user: ask for their name first, then go straight to the app.
+          return ShadowWrapper(child: const NameInputScreen());
         }
 
         // Returning user: go straight to the main app.
@@ -116,21 +119,7 @@ class _ShadowWrapperState extends State<ShadowWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    if (_activeDisguise == 'None' || _isUnlocked) {
-      return widget.child;
-    }
-
-    switch (_activeDisguise) {
-      case 'Weather':
-        return WeatherDisguise(onUnlock: _onUnlock);
-      case 'Calculator':
-        return CalculatorDisguise(onUnlock: _onUnlock);
-      case 'Finance':
-        return FinanceDisguise(onUnlock: _onUnlock);
-      case 'Notes':
-        return NotesDisguise(onUnlock: _onUnlock);
-      default:
-        return widget.child;
-    }
+    return widget.child;
   }
+
 }

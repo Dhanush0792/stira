@@ -9,9 +9,11 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
     <application
-        android:label="stira"
+        android:label="Stira"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/launcher_icon"
+        android:allowBackup="true"
+        android:restoreAnyVersion="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -41,7 +43,7 @@
             android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/launcher_icon"
-            android:label="stira"
+            android:label="Stira"
             android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

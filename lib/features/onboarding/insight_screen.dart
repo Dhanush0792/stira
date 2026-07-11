@@ -7,6 +7,7 @@ import '../../widgets/stira_primary_button.dart';
 import '../../services/local_storage.dart';
 import '../../services/stira_auth_service.dart';
 import '../dashboard/commitment_screen.dart';
+import 'permissions_gate_screen.dart';
 
 // ─── Insight Screen ───────────────────────────────────────────────────────────
 //
@@ -188,7 +189,7 @@ class _SavePlanButtonState extends State<_SavePlanButton> {
 
     // 3. Navigate to CommitmentScreen, clearing the onboarding stack.
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const CommitmentScreen()),
+      MaterialPageRoute(builder: (_) => const PermissionsGateScreen()),
       (route) => false,
     );
   }

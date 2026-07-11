@@ -43,3 +43,17 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ── Stira Security: Never commit these ────────────────────────────────────────
+# Keystore signing credentials — leaking these allows APK impersonation
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
+
+# Firebase configuration — contains API keys; managed outside git
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# APK artifacts
+*.apk
+

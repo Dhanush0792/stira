@@ -69,6 +69,20 @@ class StorageService {
     await _prefs.put('onboarding_completed', true);
   }
 
+  // ── Intro Walkthrough ──────────────────────────────────────────────────────
+
+  bool get hasSeenIntro =>
+      _prefs.get('has_seen_intro', defaultValue: false) as bool;
+
+  Future<void> setHasSeenIntro() async {
+    await _prefs.put('has_seen_intro', true);
+  }
+
+  /// Resets the intro flag — used when a new session starts with no signed-in user.
+  Future<void> resetIntroSeen() async {
+    await _prefs.put('has_seen_intro', false);
+  }
+
   // ── Guest Mode ────────────────────────────────────────────────────────────
 
   /// True when the user opted to use the app without signing in.
@@ -92,8 +106,10 @@ class StorageService {
   }
 
   // ── Monetization & Premium ────────────────────────────────────────────────
-  
-  bool get isPremium => true; // Global override per Audit Step 1
+
+  /// Returns true if the user has an active premium subscription.
+  /// This reads from Hive storage — set via setPremium() after purchase verification.
+  bool get isPremium => _prefs.get('is_premium', defaultValue: false) as bool;
 
 
   Future<void> setPremium(bool val) async {
@@ -556,6 +572,19 @@ class StorageService {
   Future<void> clearAll() async {
     await _prefs.clear();
     await _checkIns.clear();
+    // Also wipe all other Hive boxes that store sensitive health data.
+    // This ensures full GDPR erasure when the account is deleted.
+    try {
+      await _userData.clear();
+    } catch (_) {}
+    try {
+      final dopamineBox = Hive.box('dopamine_journal');
+      await dopamineBox.clear();
+    } catch (_) {}
     await _prefs.put('schema_version', currentSchemaVersion);
   }
+
+  /// Alias for clearAll — used by guest users from the legal/support screen.
+  Future<void> clearAllLocalData() => clearAll();
+
 }

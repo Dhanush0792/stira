@@ -3,9 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/stira_tokens.dart';
 import '../../widgets/stira_orb.dart';
 import '../../services/local_storage.dart';
+import '../../services/stira_auth_service.dart';
 import '../navigation/main_navigation.dart';
 import '../security/biometric_wall_screen.dart';
 import 'welcome_screen.dart';
+import 'intro_walkthrough_screen.dart';
+import 'motivation_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -45,11 +48,31 @@ class _SplashScreenState extends State<SplashScreen>
       _navigated = true;
       final storage = StorageService();
 
-      final Widget nextScreen = storage.onboardingCompleted
-          ? (storage.isBiometricEnabled
-              ? const BiometricWallScreen()
-              : const MainNavigation())
-          : const WelcomeScreen();
+      // Check real Firebase auth state — don't trust stale Hive flags alone.
+      // If no Firebase user is signed in (and not explicitly in guest mode),
+      // always restart from the beginning of the onboarding flow.
+      final firebaseUser = StiraAuthService().getCurrentUser();
+      final isGuest = storage.isGuestMode;
+      final isLoggedIn = firebaseUser != null || isGuest;
+
+      late Widget nextScreen;
+
+      if (!isLoggedIn) {
+        // No signed-in user at all — always show the full onboarding flow.
+        // Clear stale flags so the motivation + walkthrough play from the top.
+        storage.resetIntroSeen().ignore();
+        nextScreen = const MotivationScreen();
+      } else if (!storage.onboardingCompleted) {
+        // Signed in but hasn't finished onboarding (e.g. name not set).
+        nextScreen = storage.hasSeenIntro
+            ? const WelcomeScreen()
+            : const MotivationScreen();
+      } else {
+        // Fully onboarded — go to app (behind biometric wall if enabled).
+        nextScreen = storage.isBiometricEnabled
+            ? const BiometricWallScreen()
+            : const MainNavigation();
+      }
 
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
@@ -85,33 +108,24 @@ class _SplashScreenState extends State<SplashScreen>
           children: [
             FadeTransition(
               opacity: _orbFadeAnim,
-              child: const StiraOrb(intensity: 0.6, size: 90),
+              child: Image.asset(
+                'assets/icon/stira_logo.png',
+                width: 220,
+                fit: BoxFit.contain,
+              ),
             ),
             const SizedBox(height: 20),
             FadeTransition(
-                opacity: _textFadeAnim,
-                child: Column(
-                  children: [
-                    Text(
-                      'stira',
-                      style: GoogleFonts.syne(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
-                        color: StiraTokens.stiraPink,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'BEHAVIORAL INTELLIGENCE',
-                      style: GoogleFonts.dmMono(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 2.5,
-                        color: StiraTokens.stiraMuted,
-                      ),
-                    ),
-                  ],
+              opacity: _textFadeAnim,
+              child: Text(
+                'BEHAVIORAL INTELLIGENCE',
+                style: GoogleFonts.dmMono(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 2.5,
+                  color: StiraTokens.stiraMuted,
                 ),
+              ),
             ),
           ],
         ),

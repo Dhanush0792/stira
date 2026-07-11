@@ -26,6 +26,7 @@ import '../../../services/stira_auth_service.dart';
 import '../../../core/auth_wrapper.dart';
 import '../../../core/tour/stira_info_icon.dart';
 import '../../../core/tour/stira_tour_controller.dart';
+import '../../profile/legal_support_screens.dart';
 
 /// Tab 3 — Profile (Stira v2 — migrated to StiraTokens)
 /// Bug #09 fixed: ALL menu items have subtitles and uniform style
@@ -233,6 +234,11 @@ class ProfileTab extends ConsumerWidget {
                           activeTrackColor: StiraTokens.stiraPink,
                           onChanged: (val) async {
                             if (val) {
+                              final status = await Permission.notification.request();
+                              if (!status.isGranted) {
+                                await storage.setNotificationsEnabled(false);
+                                return;
+                              }
                               await StiraNotificationService.requestPermission();
                             }
                             await storage.setNotificationsEnabled(val);
@@ -256,21 +262,40 @@ class ProfileTab extends ConsumerWidget {
                           value: enabled,
                           activeTrackColor: StiraTokens.stiraPink,
                           onChanged: (val) async {
-                          if (val) {
-                            // Verify biometric works before enabling
-                            final auth = LocalAuthentication();
-                            try {
-                               final authenticated = await auth.authenticate(
-                                localizedReason: 'Confirm to enable biometric lock',
-                              );
-                              if (!authenticated) return;
-                            } catch (e) {
-                              debugPrint('Biometric setup failed: $e');
-                              return;
+                            if (val) {
+                              final auth = LocalAuthentication();
+                              try {
+                                final canCheck = await auth.canCheckBiometrics || await auth.isDeviceSupported();
+                                if (!canCheck) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Biometrics not available or supported on this device.'),
+                                      backgroundColor: StiraTokens.stiraPink,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                final authenticated = await auth.authenticate(
+                                  localizedReason: 'Confirm to enable biometric lock',
+                                  options: const AuthenticationOptions(
+                                    stickyAuth: true,
+                                    biometricOnly: false,
+                                  ),
+                                );
+                                if (!authenticated) return;
+                              } catch (e) {
+                                debugPrint('Biometric setup failed: $e');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Setup failed: $e'),
+                                    backgroundColor: StiraTokens.stiraPink,
+                                  ),
+                                );
+                                return;
+                              }
                             }
-                          }
-                          await storage.setBiometricEnabled(val);
-                        },
+                            await storage.setBiometricEnabled(val);
+                          },
                         ),
                       );
                     },
@@ -320,17 +345,6 @@ class ProfileTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   _MenuItem(
-                    emoji: '🌑',
-                    name: 'Shadow Mode',
-                    subtitle: 'Change app appearance',
-                    featureId: 'shadow_mode',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const ShadowModeSettingsScreen()),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _MenuItem(
                     emoji: '📤',
                     name: 'Export Data',
                     subtitle: 'Download as CSV',
@@ -345,10 +359,28 @@ class ProfileTab extends ConsumerWidget {
                       ref.read(tourControllerProvider.notifier).resetTour();
                     },
                   ),
+                  const SizedBox(height: 8),
+                  _MenuItem(
+                    emoji: '❓',
+                    name: 'Support & FAQs',
+                    subtitle: 'Help center and contact options',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LegalSupportScreen(initialTabIndex: 0)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _MenuItem(
+                    emoji: '📄',
+                    name: 'Privacy & Terms',
+                    subtitle: 'Legal details and privacy policy',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const LegalSupportScreen(initialTabIndex: 2)),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Divider(color: StiraTokens.stiraGlassBorder, height: 1),
                   const SizedBox(height: 12),
-                  if (isGuest)
+                  if (isGuest) ...[
                     _MenuItem(
                       emoji: '🔑',
                       name: 'Sign In to Stira',
@@ -362,8 +394,20 @@ class ProfileTab extends ConsumerWidget {
                           (route) => false,
                         );
                       },
-                    )
-                  else ...[
+                    ),
+                    const SizedBox(height: 8),
+                    _MenuItem(
+                      emoji: '🗑️',
+                      name: 'Clear All Local Data',
+                      subtitle: 'Permanently erase all data from this device',
+                      nameColor: const Color(0xFFFF3B30).withValues(alpha: 0.8),
+                      onTap: () => showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => const GuestDataDeletionScreen(),
+                      ),
+                    ),
+                  ] else ...[
                     _MenuItem(
                       emoji: '🚪',
                       name: 'Sign Out',

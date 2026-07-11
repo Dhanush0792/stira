@@ -68,7 +68,10 @@ class StiraTourOverlay extends ConsumerWidget {
       builder: (context, offset, child) {
         return Transform.translate(
           offset: Offset(offset.dx, offset.dy * MediaQuery.of(context).size.height),
-          child: child,
+          child: Material(
+            type: MaterialType.transparency,
+            child: child,
+          ),
         );
       },
       child: Container(
@@ -106,7 +109,7 @@ class StiraTourOverlay extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "\${controller.currentStepIndex + 1} of \${controller.totalSteps}",
+                        "${controller.currentStepIndex + 1} of ${controller.totalSteps}",
                         style: GoogleFonts.dmMono(
                           fontSize: 11,
                           color: Colors.white.withValues(alpha: 0.50),
