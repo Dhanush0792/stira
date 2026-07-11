@@ -5,6 +5,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_auth_android/local_auth_android.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 
 import '../../../theme/stira_tokens.dart';
 import '../../../widgets/stira_glass_card.dart';
@@ -249,6 +252,8 @@ class ProfileTab extends ConsumerWidget {
                     },
                   ),
                   const SizedBox(height: 8),
+                  const BatteryOptimizationMenuItem(),
+                  const SizedBox(height: 8),
                   ValueListenableBuilder(
                     valueListenable:
                         prefs.listenable(keys: ['biometric_enabled']),
@@ -277,10 +282,13 @@ class ProfileTab extends ConsumerWidget {
                                 }
                                 final authenticated = await auth.authenticate(
                                   localizedReason: 'Confirm to enable biometric lock',
-                                  options: const AuthenticationOptions(
-                                    stickyAuth: true,
-                                    biometricOnly: false,
-                                  ),
+                                  authMessages: const [
+                                    AndroidAuthMessages(
+                                      signInTitle: 'Biometric Lock',
+                                      signInHint: 'Verify identity',
+                                    ),
+                                  ],
+                                  biometricOnly: false,
                                 );
                                 if (!authenticated) return;
                               } catch (e) {
@@ -808,6 +816,67 @@ class _GuestBanner extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class BatteryOptimizationMenuItem extends StatefulWidget {
+  const BatteryOptimizationMenuItem({super.key});
+
+  @override
+  State<BatteryOptimizationMenuItem> createState() => _BatteryOptimizationMenuItemState();
+}
+
+class _BatteryOptimizationMenuItemState extends State<BatteryOptimizationMenuItem> with WidgetsBindingObserver {
+  bool _ignored = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _checkStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkStatus();
+    }
+  }
+
+  Future<void> _checkStatus() async {
+    final status = await StiraNotificationService.isBatteryOptimizationIgnored();
+    if (mounted) {
+      setState(() {
+        _ignored = status;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _MenuItem(
+      emoji: '⚡',
+      name: 'Battery Optimization',
+      subtitle: _ignored ? 'Background engine active' : 'Tap to allow background delivery',
+      trailing: CupertinoSwitch(
+        value: _ignored,
+        activeTrackColor: StiraTokens.stiraPink,
+        onChanged: (val) async {
+          if (val) {
+            await StiraNotificationService.requestIgnoreBatteryOptimization();
+          } else {
+            // Cannot disable programmatically; direct user to settings
+            await openAppSettings();
+          }
+        },
       ),
     );
   }
